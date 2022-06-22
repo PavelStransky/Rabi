@@ -91,7 +91,7 @@ Hη(rabi::Rabi) = Jx(rabi)
 H(rabi::Rabi) = H0(rabi) + 2.0 * sqrt(rabi.R) * (rabi.λ * Hλ(rabi) + rabi.μ * Hμ(rabi) + rabi.ν * Hν(rabi) + rabi.η * Hη(rabi))
 
 " Evolution operator "
-U(rabi::Rabi, t::Float64) = exp(dense(-im * H(rabi) * t))
+U(rabi::Rabi, t::Float64) = exp(dense(-im * t * H(rabi)))
 
 " Ground state "
 ΨGS(rabi::Rabi) = tensor(coherentstate(FockBasis(rabi), 0), spindown(SpinBasis(rabi)))

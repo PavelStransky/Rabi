@@ -9,8 +9,7 @@ end
 @everywhere include("QuarticOscillator.jl")
 
 @everywhere ComputeAsymptotics(rabi::Rabi) = AsymptoticValuesMatrix(rabi, AllOperators(rabi))
-@everywhere ComputeTime(rabi::Rabi; mint=0, maxt=20, numt=201) = ExpectationValues(rabi, AllOperators(rabi); Ψ0=Ψ0, mint=mint, maxt=maxt, numt=numt)
-
+@everywhere ComputeTime(rabi::Rabi; mint=0, maxt=20, numt=201) = ExpectationValues(rabi, AllOperators(rabi); mint=mint, maxt=maxt, numt=numt, showGraph=false, saveGraph=false, saveData=false)
 
 function Plot(xs, result)
     p1 = plot(xs, result[:,1], title="Jx", ylims=(-0.5, 0.5))
@@ -75,31 +74,34 @@ function Compute(rabi::Rabi; λs=nothing, δs=nothing, Rs=nothing, parallel=true
     return result
 end
 
-function DQPT(rabi::Rabi; λs=nothing, μs=nothing, mint=0, maxt=30, numt=601, showGraph=true, parallel=true)
+function DQPT(rabi::Rabi; λs=nothing, μs=nothing, mint=0.0, maxt=30.0, numt=601, showGraph=true, parallel=true)
     isλ = λs !== nothing
     isμ = μs !== nothing
 
     time = @elapsed begin
         if isλ
             if parallel
-                result = pmap((λ)->ComputeTime(Rabi(rabi=rabi, N=-1, λ=λ); mint=mint, maxt=maxt, numt=numt), λs)
+                result = pmap((λ)->ComputeTime(Copy(rabi, N=-1, λ=λ); mint=mint, maxt=maxt, numt=numt), λs)
             else
-                result = [ComputeTime(Rabi(rabi=rabi, N=-1, λ=λ); mint=mint, maxt=maxt, numt=numt) for λ in λs]
+                result = [ComputeTime(Copy(rabi, N=-1, λ=λ); mint=mint, maxt=maxt, numt=numt) for λ in λs]
             end
             xs = λs
             fname = "dqptL_($(rabi.R),$(rabi.δ),$(rabi.μ),$(rabi.ν))"
+
         elseif isμ
             if parallel
-                result = pmap((μ)->ComputeTime(Rabi(rabi=rabi, N=-1, μ=μ); mint=mint, maxt=maxt, numt=numt), μs)
+                result = pmap((μ)->ComputeTime(Copy(rabi, N=-1, μ=μ, ν=μ); mint=mint, maxt=maxt, numt=numt), μs)
             else
-                result = [ComputeTime(Rabi(rabi=rabi, N=-1, λ=λ); mint=mint, maxt=maxt, numt=numt) for λ in λs]
+                result = [ComputeTime(Copy(rabi, N=-1, μ=μ, ν=μ); mint=mint, maxt=maxt, numt=numt) for μ in μs]
             end
-            xs = μs
-            fname = "dqptM_($(rabi.R),$(rabi.λ),$(rabi.δ),$(rabi.ν))"
+            
+            xs = log10.(μs)
+            fname = "dqptM_($(rabi.R),$(rabi.λ),$(rabi.δ))"
         end
-        
+
         # Reshape of the results
-        result = [result[k][i,j] for i in 1:length(result[1][:,1]), k in 1:length(λs), j in 1:numt]
+        result = [result[k][i,j] for i in 1:length(result[1][:,1]), k in 1:length(xs), j in 1:numt]
+
     end
     println(time)
 
@@ -109,10 +111,12 @@ function DQPT(rabi::Rabi; λs=nothing, μs=nothing, mint=0, maxt=30, numt=601, s
     if showGraph
         p1 = heatmap(ts, xs, result[1,:,:], color=:coolwarm, clims=(-0.1, 0.1))
         p2 = heatmap(ts, xs, result[2,:,:], color=:coolwarm, clims=(-0.1, 0.1))
-        p3 = heatmap(ts, xs, result[3,:,:], clims=(-0.5, 0.5))
+        p3 = heatmap(ts, xs, result[3,:,:], color=:coolwarm, clims=(-0.5, 0.5))
         p4 = heatmap(ts, xs, result[4,:,:], clims=(0, 1))
+        p5 = heatmap(ts, xs, result[5,:,:], color=:coolwarm, clims=(-0.5, 0.5))
+        p6 = heatmap(ts, xs, result[6,:,:], color=:coolwarm, clims=(-0.5, 0.5))
     
-        display(plot(p1, p2, p3, p4))
+        display(plot(p1, p2, p3, p4, p5, p6))
     end
 
     return result
