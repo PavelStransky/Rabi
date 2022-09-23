@@ -1,6 +1,6 @@
 include("../Rabi.jl")
 
-const PATH = ""
+const PATH = "d:/results/rabi/wf/"
 
 pyplot(size=(1000, 800))
 
@@ -16,7 +16,7 @@ _, pld = LevelDynamics(Rabi(R=R), ps=LinRange(0, 1, 1001), limit=300, ylims=(-1,
 
 # Initial and final systems
 rabii = Rabi(R=R, λ=λi)
-rabif = Rabi(rabii; λ=λf)
+rabif = Copy(rabii; λ=λf)
 
 ei, vi = eigenstates(rabii)
 
@@ -67,5 +67,5 @@ ExpectationValues(rabif, operators; Ψ0=as, maxt=20, saveData=false)
 
 # Wigner functions
 Wigner(rabif; Ψ0=a, operators=[:r_r=>pa], ts=LinRange(0, 20, 1001), index=1:50:1001, xs=LinRange(-1, 1, wignerMesh), ys=LinRange(-1, 1, wignerMesh), clim=(-0.1, 0.1), saveData=false, showGraph=showGraph)
-Wigner(rabif; Ψ0=as, operators=[:r_r=>pas], ts=LinRange(0, 20, 1001), index=1:50:1001, xs=LinRange(-1, 1, wignerMesh), ys=LinRange(-1, 1, wignerMesh), clim=(-0.1, 0.1), saveData=false, showGraph=showGraph)
+Wigner(rabif; Ψ0=as, operators=[:r_r=>pas], ts=LinRange(0, 20, 1001), index=1:10:1001, xs=LinRange(-1, 1, wignerMesh), ys=LinRange(-1, 1, wignerMesh), clim=(-0.1, 0.1), saveData=false, showGraph=showGraph)
 

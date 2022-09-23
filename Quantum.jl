@@ -34,7 +34,7 @@ end
 function StrengthFunction(rabif, keti)
     ef, vf = eigenstates(rabif)
     sf = [abs(dagger(vf[j]) * keti)  for (j, _) in enumerate(vf)]
-    parity = [ExpectationValue(Parity(rabi), vf[j]) for (j, _) in enumerate(vf)]
+    parity = [ExpectationValue(Parity(rabif), vf[j]) for (j, _) in enumerate(vf)]
 
     return ef, sf, parity
 end
