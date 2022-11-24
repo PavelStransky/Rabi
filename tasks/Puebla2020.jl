@@ -5,8 +5,8 @@ const PATH = "d:/results/rabi/wf/"
 pyplot(size=(1000, 800))
 
 R = 30
-λi = 0.75
-λf = λi / 2
+λi = 1
+λf = λi / 4
 
 showGraph = false
 wignerMesh = 401
@@ -66,6 +66,6 @@ operators[8] = :r_r => pas
 ExpectationValues(rabif, operators; Ψ0=as, maxt=20, saveData=false)
 
 # Wigner functions
-Wigner(rabif; Ψ0=a, operators=[:r_r=>pa], ts=LinRange(0, 20, 1001), index=1:50:1001, xs=LinRange(-1, 1, wignerMesh), ys=LinRange(-1, 1, wignerMesh), clim=(-0.1, 0.1), saveData=false, showGraph=showGraph)
+#Wigner(rabif; Ψ0=a, operators=[:r_r=>pa], ts=LinRange(0, 20, 1001), index=1:50:1001, xs=LinRange(-1, 1, wignerMesh), ys=LinRange(-1, 1, wignerMesh), clim=(-0.1, 0.1), saveData=false, showGraph=showGraph)
 Wigner(rabif; Ψ0=as, operators=[:r_r=>pas], ts=LinRange(0, 20, 1001), index=1:10:1001, xs=LinRange(-1, 1, wignerMesh), ys=LinRange(-1, 1, wignerMesh), clim=(-0.1, 0.1), saveData=false, showGraph=showGraph)
 

@@ -259,6 +259,8 @@ end
 function LevelDynamics(system::QuantumSystem; ps=LinRange(0, 2, 401), type=:λ, limit=200, saveGraph=false, kwargs...)
     print("Level dynamics in $type: ", system, "...")
 
+    limit = min(Dimension(system), limit)
+
     time = @elapsed begin
         result = Array{Float64}(undef, 0)    
         for p in ps
