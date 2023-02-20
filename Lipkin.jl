@@ -28,6 +28,11 @@ function Copy(lipkin::Lipkin; kwargs...)
     ω = haskey(kwargs, :ω) ? kwargs[:ω] : lipkin.ω
     λ = haskey(kwargs, :λ) ? kwargs[:λ] : lipkin.λ
 
+    if haskey(kwargs, :ξ)
+        ω = kwargs[:ξ]
+        λ = 1 - ω
+    end
+
     return Lipkin(; j=j, ω=ω, λ=λ)
 end
     
@@ -41,12 +46,12 @@ Base.show(io::IO, lipkin::Lipkin) = print(io, String(lipkin))
 SpinBasis(lipkin::Lipkin) = QuantumOptics.SpinBasis(lipkin.j)
 
 " Operators "
-Jx(lipkin::Lipkin) = sigmax(SpinBasis(lipkin))
-Jy(lipkin::Lipkin) = sigmay(SpinBasis(lipkin))
-Jz(lipkin::Lipkin) = sigmaz(SpinBasis(lipkin))
+Jx(lipkin::Lipkin) = 0.5 * sigmax(SpinBasis(lipkin))
+Jy(lipkin::Lipkin) = 0.5 * sigmay(SpinBasis(lipkin))
+Jz(lipkin::Lipkin) = 0.5 * sigmaz(SpinBasis(lipkin))
 
-Jp(lipkin::Lipkin) = sigmap(SpinBasis(lipkin))
-Jm(lipkin::Lipkin) = sigmam(SpinBasis(lipkin))
+Jp(lipkin::Lipkin) = 0.5 * sigmap(SpinBasis(lipkin))
+Jm(lipkin::Lipkin) = 0.5 * sigmam(SpinBasis(lipkin))
 
 Id(lipkin::Lipkin) = one(SpinBasis(lipkin))
 
@@ -54,9 +59,9 @@ Id(lipkin::Lipkin) = one(SpinBasis(lipkin))
 H0(lipkin::Lipkin) = lipkin.ω * Jz(lipkin)
 Hλ(lipkin::Lipkin) = -1 / Size(lipkin) * Jx(lipkin) * Jx(lipkin)
 
-# It is not clear to me why the factor 2 is here 
-# (but it makes it consistent with Dicke in CollectiveModels and with the Python code)
-H(lipkin::Lipkin) = H0(lipkin) + 0.5 * lipkin.λ * Hλ(lipkin)
+# It is not clear to me why the factor 0.5 is here 
+# (but it makes it consistent with all the results from elsewhere)
+H(lipkin::Lipkin) = H0(lipkin) + lipkin.λ * Hλ(lipkin)
 
 " Evolution operator "
 U(lipkin::Lipkin, t::Float64) = exp(dense(-im * t * H(lipkin)))
@@ -91,10 +96,10 @@ end
 
 function eigenstates(lipkin::Lipkin) 
     energies, vectors = QuantumOptics.eigenstates(dense(H(lipkin)))
-    return energies / Size(lipkin), vectors
+    return energies / lipkin.j, vectors
 end
 
 function eigenstates(lipkin::Lipkin, limit) 
     energies, vectors = QuantumOptics.eigenstates(dense(0.5 * (H(lipkin) + dagger(H(lipkin)))), limit)
-    return energies / Size(lipkin), vectors
+    return energies / lipkin.j, vectors
 end
