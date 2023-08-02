@@ -13,11 +13,7 @@ struct Lipkin <: QuantumSystem
     ω
     λ
 
-    function Lipkin(; j::Rational=1//2, ω=1, λ=0)
-        return new(j, ω, λ)
-    end
-
-    function Lipkin(; j::Int=1, ω=1, λ=0)
+    function Lipkin(; j=1, ω=1, λ=0)
         return new(j, ω, λ)
     end
 end
@@ -27,15 +23,24 @@ function Copy(lipkin::Lipkin; kwargs...)
     j = haskey(kwargs, :j) ? kwargs[:j] : lipkin.j
     ω = haskey(kwargs, :ω) ? kwargs[:ω] : lipkin.ω
     λ = haskey(kwargs, :λ) ? kwargs[:λ] : lipkin.λ
+    ξ = haskey(kwargs, :ξ) ? kwargs[:ξ] : lipkin.ξ
 
     if haskey(kwargs, :ξ)
-        ω = kwargs[:ξ]
-        λ = 1 - ω
+        ξ = kwargs[:ξ]
+        
+        ω = 0.5 * (1 - ξ)
+
+        if(haskey(kwargs, :ω))
+            ω *= kwargs[:ω]
+        end
+
+        λ = 2 * ξ
     end
 
     return Lipkin(; j=j, ω=ω, λ=λ)
 end
     
+
 Size(lipkin::Lipkin) = 2 * lipkin.j
 Dimension(lipkin::Lipkin) = Size(lipkin) + 1
 
@@ -56,8 +61,8 @@ Jm(lipkin::Lipkin) = 0.5 * sigmam(SpinBasis(lipkin))
 Id(lipkin::Lipkin) = one(SpinBasis(lipkin))
 
 " Hamiltonian "
-H0(lipkin::Lipkin) = lipkin.ω * Jz(lipkin)
-Hλ(lipkin::Lipkin) = -1 / Size(lipkin) * Jx(lipkin) * Jx(lipkin)
+H0(lipkin::Lipkin) = lipkin.ω * (Jz(lipkin) + lipkin.j * Id(lipkin))
+Hλ(lipkin::Lipkin) = (-1 / Size(lipkin)) * (Jx(lipkin) * Jx(lipkin))
 
 # It is not clear to me why the factor 0.5 is here 
 # (but it makes it consistent with all the results from elsewhere)
