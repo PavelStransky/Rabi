@@ -129,6 +129,45 @@ function Wigner(system::QuantumSystem; husimi=false, Ψ0=nothing, ts=[0,1,2], in
     return true
 end
 
+""" Complex survival amplitude """
+function SurvivalAmplitude(system::QuantumSystem; Ψ0=nothing, mint=0.0, maxt=100.0, numt=1001, showGraph=true, saveGraph=true, saveData=true, kwargs...)    
+    # Initial state
+    if Ψ0 === nothing Ψ0 = ΨGS(system) end
+
+    result = Array{Float64}(undef, 2, numt)
+
+    time = @elapsed begin
+        u = U(system, mint)
+        du = U(system, (maxt - mint) / numt)
+        Ψ = u * Ψ0      # Initial state
+
+        for i in 1:numt
+            s = sum(Ψ.data .* Ψ0.data)
+            result[1, i] = real(s)
+            result[2, i] = imag(s)
+            Ψ = du * Ψ
+        end
+    end
+    println(time)
+
+    tout = LinRange(mint, maxt, numt)
+
+    if showGraph || saveGraph
+        ps = Array{Any}(undef, 4)
+        ps[1] = plot(tout, result[1,:], xlabel="\$t\$", ylabel="Re\$A\$", legend=false)
+        ps[2] = plot(tout, result[2,:], xlabel="\$t\$", ylabel="Im\$A\$", legend=false)
+        ps[3] = plot(tout, log.(result[1,:].^2 .+ result[2,:].^2), xlabel="\$t\$", ylabel="\$\\ln|A|^2\$", legend=false)
+        ps[4] = plot(result[1,:], result[2,:], xlabel="Re\$A\$", ylabel="Im\$A\$", legend=false)
+
+        p = plot(ps..., layout=(2, 2), plot_title=String(system); kwargs...)
+        showGraph && display(p)
+        saveGraph && savefig(p, "$(PATH)amplitude_$system.pdf")
+    end
+
+    return result
+end
+
+
 """ Expectation values of specific operator """
 function ExpectationValues(system::QuantumSystem, operators; Ψ0=nothing, mint=0.0, maxt=100.0, numt=1001, showGraph=true, saveGraph=true, saveData=true, asymptotics=true, kwargs...)    
     # Initial state
