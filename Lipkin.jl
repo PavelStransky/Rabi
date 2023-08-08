@@ -12,9 +12,15 @@ struct Lipkin <: QuantumSystem
     j
     ω
     λ
+    ζ
 
-    function Lipkin(; j=1, ω=1, λ=0)
-        return new(j, ω, λ)
+    function Lipkin(; j=1, ω=1, λ=0, ζ=0, ξ=nothing)
+        if ξ !== nothing
+            ω = 1 - ξ
+            λ = ξ
+        end
+
+        return new(j, ω, λ, ζ)
     end
 end
 
@@ -23,29 +29,28 @@ function Copy(lipkin::Lipkin; kwargs...)
     j = haskey(kwargs, :j) ? kwargs[:j] : lipkin.j
     ω = haskey(kwargs, :ω) ? kwargs[:ω] : lipkin.ω
     λ = haskey(kwargs, :λ) ? kwargs[:λ] : lipkin.λ
-    ξ = haskey(kwargs, :ξ) ? kwargs[:ξ] : lipkin.ξ
+    ζ = haskey(kwargs, :ζ) ? kwargs[:ζ] : lipkin.ζ
 
     if haskey(kwargs, :ξ)
         ξ = kwargs[:ξ]
         
-        ω = 0.5 * (1 - ξ)
+        ω = 1 - ξ
 
         if(haskey(kwargs, :ω))
             ω *= kwargs[:ω]
         end
 
-        λ = 2 * ξ
+        λ = ξ
     end
 
-    return Lipkin(; j=j, ω=ω, λ=λ)
+    return Lipkin(; j=j, ω=ω, λ=λ, ζ=ζ)
 end
     
-
 Size(lipkin::Lipkin) = 2 * lipkin.j
 Dimension(lipkin::Lipkin) = Size(lipkin) + 1
 
 """ Print """
-Base.String(lipkin::Lipkin) = "Lipkin(j=$(lipkin.j), ω=$(lipkin.ω), λ=$(lipkin.λ))"
+Base.String(lipkin::Lipkin) = "Lipkin(j=$(lipkin.j), ω=$(lipkin.ω), λ=$(lipkin.λ), ζ=$(lipkin.ζ))"
 Base.show(io::IO, lipkin::Lipkin) = print(io, String(lipkin))
 
 SpinBasis(lipkin::Lipkin) = QuantumOptics.SpinBasis(lipkin.j)
@@ -62,7 +67,7 @@ Id(lipkin::Lipkin) = one(SpinBasis(lipkin))
 
 " Hamiltonian "
 H0(lipkin::Lipkin) = lipkin.ω * (Jz(lipkin) + lipkin.j * Id(lipkin))
-Hλ(lipkin::Lipkin) = (-1 / Size(lipkin)) * (Jx(lipkin) * Jx(lipkin))
+Hλ(lipkin::Lipkin) = (-1 / Size(lipkin)) * (2 * Jx(lipkin) + lipkin.ζ * (Jz(lipkin) + lipkin.j * Id(lipkin))) * (2 * Jx(lipkin) + lipkin.ζ * (Jz(lipkin) + lipkin.j * Id(lipkin)))
 
 # It is not clear to me why the factor 0.5 is here 
 # (but it makes it consistent with all the results from elsewhere)
@@ -101,10 +106,10 @@ end
 
 function eigenstates(lipkin::Lipkin) 
     energies, vectors = QuantumOptics.eigenstates(dense(H(lipkin)))
-    return energies / lipkin.j, vectors
+    return energies / Size(lipkin), vectors
 end
 
 function eigenstates(lipkin::Lipkin, limit) 
     energies, vectors = QuantumOptics.eigenstates(dense(0.5 * (H(lipkin) + dagger(H(lipkin)))), limit)
-    return energies / lipkin.j, vectors
+    return energies / Size(lipkin), vectors
 end
