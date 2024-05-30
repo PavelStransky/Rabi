@@ -31,10 +31,10 @@ function Label(name)
     end
 end
 
-function StrengthFunction(rabif, keti)
-    ef, vf = eigenstates(rabif)
+function StrengthFunction(system::QuantumSystem, keti)
+    ef, vf = eigenstates(system)
     sf = [abs(dagger(vf[j]) * keti)  for (j, _) in enumerate(vf)]
-    parity = [ExpectationValue(Parity(rabif), vf[j]) for (j, _) in enumerate(vf)]
+    parity = [ExpectationValue(Parity(system), vf[j]) for (j, _) in enumerate(vf)]
 
     return ef, sf, parity
 end
@@ -59,8 +59,8 @@ function Overlap(vectors; limit=nothing)
 end
 
 " Wigner function "
-function Wigner(system::QuantumSystem; husimi=false, Ψ0=nothing, ts=[0,1,2], index=nothing, operators=[], xs=LinRange(-1, 1, 101), ys=nothing, showGraph=true, saveData=true, saveGraph=true, log=false, clim=(-0.2, 0.2), kwargs...)
-    pyplot(size = (1000, 1000))
+function Wigner(system::QuantumSystem; husimi=false, Ψ0=nothing, ts=[0,1,2], index=nothing, operators=[], marginals=false, xs=LinRange(-1, 1, 101), ys=nothing, showGraph=true, saveData=true, saveGraph=true, log=false, clim=(-0.2, 0.2), kwargs...)
+    #pyplot(size = (1000, 1000))
 
     # Range in y direction
     if ys === nothing ys = xs end
@@ -117,6 +117,18 @@ function Wigner(system::QuantumSystem; husimi=false, Ψ0=nothing, ts=[0,1,2], in
                 p = plot(ps, p, layout=grid(2, 1, heights=[0.2 ,0.8]))
             end
 
+            if marginals
+                marginal_x = vec(sum(w, dims=2))
+                marginal_x = marginal_x / (sum(marginal_x) * (xs[2] - xs[1]))
+                marginal_y = vec(sum(w, dims=1))
+                marginal_y = marginal_y / (sum(marginal_y) * (ys[2] - ys[1]))
+                pm = plot(xs, marginal_x, title="Marginal x", xlabel=raw"$q$", ylabel="P", label="X", legend=true)
+                pm = plot!(pm, ys, marginal_y, title="Marginal y", xlabel=raw"$p$", ylabel="P", label="P")
+                Export("$(PATH)$(title)_$(system)_$(tstr)_marginal_x.txt", xs, marginal_x)
+                Export("$(PATH)$(title)_$(system)_$(tstr)_marginal_p.txt", ys, marginal_y)
+                savefig(pm, "$(PATH)$(title)_$(system)_$(i)_marginal.png")
+            end
+
             showGraph && display(plot(p))
             saveGraph && savefig(p, "$(PATH)$(title)_$(system)_$i$logstr.png")
         end
@@ -125,6 +137,16 @@ function Wigner(system::QuantumSystem; husimi=false, Ψ0=nothing, ts=[0,1,2], in
 
         saveData && Export("$(PATH)$(title)_$(system)_$tstr$logstr.txt", xs, ys, w)
     end
+
+    opvalues = nothing
+    ρ = nothing
+    w = nothing
+    Ψt = nothing
+    ps = nothing
+    p = nothing
+    psp = nothing
+
+    GC.gc()
 
     return true
 end
@@ -221,6 +243,57 @@ function ExpectationValues(system::QuantumSystem, operators; Ψ0=nothing, mint=0
     return result
 end
 
+function ExpectationValuesLindblad(system::QuantumSystem, operators, lindblad; Ψ0=nothing, mint=0.0, maxt=100.0, numt=1001, showGraph=true, saveGraph=true, saveData=true, asymptotics=true, fname="", kwargs...)    
+""" Expectation values of specific operator in Lindblad equation """
+    # Initial state
+    if Ψ0 === nothing Ψ0 = ΨGS(system) end
+
+    print("Expectation values ", system, " E=", real(expect(H(system), Ψ0)) / Size(system), "...")
+
+    numop = length(operators)
+    result = Array{Float64}(undef, numop, numt)
+
+    ts = LinRange(mint, maxt, numt)
+    tout, ρt = timeevolution.master(ts, Ψ0, H(system), lindblad)
+
+    time = @elapsed begin
+        for (j, (name, operator)) in enumerate(operators)
+            expectation = real(expect(operator, ρt))
+
+            for i in 1:numt
+                result[j, i] = expectation[i]
+            end
+        end
+    end
+    println(time)
+
+    if asymptotics
+        asymptoticValues = AsymptoticValues(system, operators; Ψ0=Ψ0)
+    end
+
+    if showGraph || saveGraph
+        ps = Array{Any}(undef, numop)
+        for (j, (name, _)) in enumerate(operators)
+            ps[j] = plot(tout, result[j,:], xlabel="\$t\$", title=Label(name), legend=false)
+            if asymptotics
+                ps[j] = plot!(ps[j], [mint, maxt], [asymptoticValues[j], asymptoticValues[j]], color = :red, width=2)
+            end
+        end
+
+        p = plot(ps..., layout=(2, numop ÷ 2); kwargs...)
+        showGraph && display(p)
+        saveGraph && savefig(p, "$(PATH)$(fname)lindblad_$system.png")
+    end
+
+    if saveData
+        for (j, (name, _)) in enumerate(operators)
+            Export("$(PATH)$(fname)$(name)_$system.txt", tout, result[j,:], asymptotics ? asymptoticValues[j] : nothing)
+        end
+    end
+
+    return result
+end
+
 """ Asymptotic values of the operators """
 function AsymptoticValues(system::QuantumSystem, operators; Ψ0=nothing, mint=200.0, maxt=1000.0, numt=2000)
     print("Asymptotic ")
@@ -303,6 +376,7 @@ function LevelDynamics(system::QuantumSystem; ps=LinRange(0, 2, 401), type=:λ, 
     time = @elapsed begin
         result = Array{Float64}(undef, 0)    
         for p in ps
+            print(".")
             system = Copy(system; N=-limit, type=>p)
             energies, _ = eigenstates(system, limit)
             append!(result, energies[1:limit])
