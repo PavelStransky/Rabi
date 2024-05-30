@@ -5,7 +5,6 @@ from matplotlib.animation import FuncAnimation, FFMpegWriter
 
 from qutip import *
 import time
-from scipy.sparse.linalg.eigen.arpack.arpack import _augmented_orthonormal_cols
 
 plt.ion()
 class Rabi:
@@ -223,6 +222,6 @@ times = np.linspace(0, 200, 1001)
 for gamma in np.linspace(0.2, 2, 10):
     WignerAnimation(gamma, times)
 """
-#Wigner()
+Wigner()
 #LD()
 
