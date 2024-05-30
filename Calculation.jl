@@ -9,7 +9,7 @@ end
 @everywhere include("QuarticOscillator.jl")
 
 @everywhere ComputeAsymptotics(rabi::Rabi) = AsymptoticValuesMatrix(rabi, AllOperators(rabi))
-@everywhere ComputeTime(rabi::Rabi; mint=0, maxt=20, numt=201) = ExpectationValues(rabi, AllOperators(rabi); mint=mint, maxt=maxt, numt=numt, showGraph=false, saveGraph=false, saveData=false)
+@everywhere ComputeTime(rabi::Rabi; mint=0, maxt=20, numt=201) = ExpectationValues(rabi, AllOperators(rabi); mint=mint, maxt=maxt, numt=numt, showGraph=false, saveGraph=false, saveData=false, asymptotics=false)
 
 function Plot(xs, result)
     p1 = plot(xs, result[:,1], title="Jx", ylims=(-0.5, 0.5))
@@ -74,7 +74,7 @@ function Compute(rabi::Rabi; λs=nothing, δs=nothing, Rs=nothing, parallel=true
     return result
 end
 
-function DQPT(rabi::Rabi; λs=nothing, μs=nothing, mint=0.0, maxt=30.0, numt=601, showGraph=true, parallel=true)
+function DQPT(rabi::Rabi; λs=nothing, μs=nothing, mint=0.0, maxt=30.0, numt=601, showGraph=true, saveData=true, parallel=true)
     isλ = λs !== nothing
     isμ = μs !== nothing
 
@@ -105,8 +105,10 @@ function DQPT(rabi::Rabi; λs=nothing, μs=nothing, mint=0.0, maxt=30.0, numt=60
     end
     println(time)
 
-    ts = LinRange(mint, maxt, numt)
-    Export("$(PATH)$fname", ts, xs, result)
+    if saveData
+        ts = LinRange(mint, maxt, numt)
+        Export("$(PATH)$fname", ts, xs, result)
+    end
 
     if showGraph
         p1 = heatmap(ts, xs, result[1,:,:], color=:coolwarm, clims=(-0.1, 0.1))
