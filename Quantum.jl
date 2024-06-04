@@ -58,9 +58,8 @@ function Overlap(vectors; limit=nothing)
     return result, p
 end
 
-" Wigner function "
 function Wigner(system::QuantumSystem; husimi=false, Ψ0=nothing, ts=[0,1,2], index=nothing, operators=[], marginals=false, xs=LinRange(-1, 1, 101), ys=nothing, showGraph=true, saveData=true, saveGraph=true, log=false, clim=(-0.2, 0.2), kwargs...)
-    #pyplot(size = (1000, 1000))
+    """ Wigner function """
 
     # Range in y direction
     if ys === nothing ys = xs end
@@ -112,22 +111,22 @@ function Wigner(system::QuantumSystem; husimi=false, Ψ0=nothing, ts=[0,1,2], in
                 pspi += 1
             end
 
-            if len > 0
-                ps = len == 1 ? plot(psp[1]) : plot(psp..., layout=grid(1, len))
-                p = plot(ps, p, layout=grid(2, 1, heights=[0.2 ,0.8]))
-            end
-
             if marginals
                 marginal_x = vec(sum(w, dims=2))
                 marginal_x = marginal_x / (sum(marginal_x) * (xs[2] - xs[1]))
                 marginal_y = vec(sum(w, dims=1))
                 marginal_y = marginal_y / (sum(marginal_y) * (ys[2] - ys[1]))
-                pm = plot(xs, marginal_x, title="Marginal x", xlabel=raw"$q$", ylabel="P", label="X", legend=true)
-                pm = plot!(pm, ys, marginal_y, title="Marginal y", xlabel=raw"$p$", ylabel="P", label="P")
-                Export("$(PATH)$(title)_$(system)_$(tstr)_marginal_x.txt", xs, marginal_x)
-                Export("$(PATH)$(title)_$(system)_$(tstr)_marginal_p.txt", ys, marginal_y)
-                savefig(pm, "$(PATH)$(title)_$(system)_$(i)_marginal.png")
+                p = plot!(p, xs, (marginal_x * (ys[end] - ys[1]) / 15) .+ ys[1], legend=false)
+                p = plot!(p, xs[end] .- (marginal_y * (xs[end] - xs[1]) / 15), ys)
+                saveData && Export("$(PATH)$(title)_$(system)_$(i)_$(tstr)_marginal_x", xs, marginal_x)
+                saveData && Export("$(PATH)$(title)_$(system)_$(i)_$(tstr)_marginal_p", ys, marginal_y)
             end
+
+            if len > 0
+                ps = len == 1 ? plot(psp[1]) : plot(psp..., layout=grid(1, len))
+                p = plot(ps, p, layout=grid(2, 1, heights=[0.2 ,0.8]))
+            end
+
 
             showGraph && display(plot(p))
             saveGraph && savefig(p, "$(PATH)$(title)_$(system)_$i$logstr.png")
