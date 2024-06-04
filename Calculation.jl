@@ -105,8 +105,9 @@ function DQPT(rabi::Rabi; λs=nothing, μs=nothing, mint=0.0, maxt=30.0, numt=60
     end
     println(time)
 
+    ts = LinRange(mint, maxt, numt)
+
     if saveData
-        ts = LinRange(mint, maxt, numt)
         Export("$(PATH)$fname", ts, xs, result)
     end
 
