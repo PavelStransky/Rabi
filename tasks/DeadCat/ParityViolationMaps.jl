@@ -2,11 +2,10 @@ using Distributed
 @everywhere const WORKERS = 16
 include("../../Calculation.jl")
 pyplot(size=(1200, 1200))
-@everywhere const PATH = "d:/results/Rabi/deadcat/"
+@everywhere const PATH = "d:/results/Rabi/deadcat/f4/"
 R = 100.0
 rabi = Rabi(R=R, λ=0.75, δ=0.5)
 μs = 10 .^ LinRange(-4, log10(0.6), 1001)
-# μs = LinRange(0, 0.6, 301)
 result = DQPT(rabi, μs=μs, maxt=50, numt=1001)
 xs = log10.(μs)
 ts = LinRange(0, 50, 1001)
@@ -22,5 +21,3 @@ p3 = heatmap(ts, xs, result[3,:,:], clims=(-0.5, 0), title="Jz")
 p4 = heatmap(ts, xs, result[4,:,:], clims=(0, 1), title="Survival probability")
 p = plot(p3, p4, layout=(2, 1))
 savefig(p, PATH * "jz P $R.png")
-
-
