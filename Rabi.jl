@@ -51,7 +51,7 @@ Dimension(rabi::Rabi) = rabi.N + 1
 DensityMatrix(_::Rabi, Ψ) = ptrace(Ψ, 2)
 
 """ Print """
-Base.String(rabi::Rabi) = "Rabi(N=$(rabi.N), ω=$(rabi.ω), R=$(rabi.R), δ=$(rabi.δ), λ=$(rabi.λ), μ=$(rabi.μ), ν=$(rabi.ν), η=$(rabi.η))"
+Base.String(rabi::Rabi) = "Rabi(N=$(rabi.N), ω=$(rabi.ω), R=$(rabi.R), δ=$(rabi.δ), λ=$(rabi.λ), " * (rabi.μ == rabi.ν ? "μ=ν=$(rabi.μ)" : "μ=$(rabi.μ), ν=$(rabi.ν)") * ", η=$(rabi.η))"
 Base.show(io::IO, rabi::Rabi) = print(io, String(rabi))
 
 " Optimal value of N "
