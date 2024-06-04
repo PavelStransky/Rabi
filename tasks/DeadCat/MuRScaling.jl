@@ -1,7 +1,8 @@
 using Distributed
 @everywhere const WORKERS = 16
 include("../../Calculation.jl")
-@everywhere const PATH = "d:/results/Rabi/deadcat/"
+# @everywhere const PATH = "d:/results/Rabi/deadcat/"
+@everywhere const PATH = ""
 
 function FindExtremes(result, k; margin=1)
     mins = []
@@ -57,7 +58,7 @@ function Calculate()
 
         rabi = Rabi(R=R, λ=0.75, δ=0.5)
 
-        result = DQPT(rabi, μs=μs, mint=mint, maxt=maxt, numt=numt + 1, showGraph=false, parallel=true, saveData=true)
+        result = DQPT(rabi, μs=μs, mint=mint, maxt=maxt, numt=numt + 1, showGraph=false, parallel=true, saveData=false)
         mins, maxs = FindExtremes(result, 5, margin=maximum([trunc(Int, 1000 / R), 10]))
 
         xs = [(maxt - mint) / numt * mins[j][2] + mint for j = 1:length(mins)]
