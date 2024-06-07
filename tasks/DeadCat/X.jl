@@ -1,7 +1,3 @@
-using Distributed
-
-@everywhere const WORKERS = 4
-
 include("../../Calculation.jl")
 pyplot(size=(1200, 1200))
 # const PATH = "d:/results/Rabi/deadcat/f3/"
