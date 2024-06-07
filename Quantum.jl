@@ -247,7 +247,7 @@ function ExpectationValuesLindblad(system::QuantumSystem, operators, lindblad; �
     # Initial state
     if Ψ0 === nothing Ψ0 = ΨGS(system) end
 
-    print("Expectation values ", system, " E=", real(expect(H(system), Ψ0)) / Size(system), "...")
+    println("Expectation values ", system, " E=", real(expect(H(system), Ψ0)) / Size(system), "...")
 
     numop = length(operators)
     result = Array{Float64}(undef, numop, numt)
@@ -264,7 +264,7 @@ function ExpectationValuesLindblad(system::QuantumSystem, operators, lindblad; �
             end
         end
     end
-    println(time)
+    println("Finished ", system, " E=", real(expect(H(system), Ψ0)) / Size(system), " ", time)
 
     if asymptotics
         asymptoticValues = AsymptoticValues(system, operators; Ψ0=Ψ0)

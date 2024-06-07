@@ -1,8 +1,8 @@
 using Distributed
 @everywhere const WORKERS = 16
 include("../../Calculation.jl")
-# @everywhere const PATH = "d:/results/Rabi/deadcat/"
-@everywhere const PATH = ""
+@everywhere const PATH = "d:/results/Rabi/deadcat/minmax/"
+# @everywhere const PATH = ""
 
 function FindExtremes(result, k; margin=1)
     mins = []
@@ -44,11 +44,11 @@ function Export(fname, xs, ys, zs)
 end
 
 function Calculate()
-    Rs = [50 100 200 500 1000 2000 5000]
+    Rs = [40 50 75 100 150 200]
 
     for R in Rs
         minx = 0.0
-        maxx = 10 * 0.135 / R
+        maxx = 20 * 0.135 / R
         numx = 1000
         μs = LinRange(minx, maxx, numx + 1)
     

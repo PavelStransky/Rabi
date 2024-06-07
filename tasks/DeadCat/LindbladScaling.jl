@@ -1,20 +1,39 @@
-include("../../Rabi.jl")
+using Distributed
 
-const PATH = "d:/results/Rabi/deadcat/"
+@everywhere  const WORKERS = 16
+
+if nprocs() <= WORKERS
+    addprocs(WORKERS + 1 - nprocs())
+end
+
+@everywhere include("../../Rabi.jl")
+
+# @everywhere const PATH = "d:/results/Rabi/deadcat/f5/"
+@everywhere const PATH = ""
 
 function Compute()
-    result = []
+    R = 100.0
+    μ = 0.1325 / R
+    ν = μ
+    
+    ds = LinRange(0, 0.15, 151)
+    
+    mint = 0.0
+    maxt = 30.0
+    numt = 1001
+    
+    rabi = Rabi(R=R, λ=0.75, δ=0.5, μ=μ, ν=ν)
+    
+    time = @elapsed evs = pmap((d)->ExpectationValuesLindblad(rabi, [:q=>X(rabi)], [d * A(rabi)]; mint=mint, maxt=maxt, numt=numt, showGraph=false, saveGraph=false, fname="A_", saveData=true, asymptotics=false), ds)
+    println("Elapsed time: $time")
 
-    for d = ds
-        # ev = ExpectationValues(rabi, [:q=>X(rabi)]; mint=mint, maxt=maxt, numt=numt, showGraph=false, saveGraph=false, fname="A_", saveData=false, asymptotics=false)
-        ev = ExpectationValuesLindblad(rabi, [:q=>X(rabi)], [d * A(rabi)]; mint=mint, maxt=maxt, numt=numt, showGraph=true, saveGraph=false, fname="A_", saveData=true, asymptotics=false)
+    result = []
+    for (index, d) = enumerate(ds)
+        ev = evs[index]	
         ev = [ev[j] for j = 1:length(ev)]
         (value, index) = findmin(ev)
 
         display(plot(ev))
-
-        println("Minimum d = $d, value = $value")
-
         push!(result, [d, value])
     end
 
@@ -29,17 +48,5 @@ function Save(fname, data)
     end
 end
 
-R = 100.0
-μ = 0.135341379 / R
-ν = μ
-
-ds = LinRange(0, 0.1, 21)
-
-mint = 0.0
-maxt = 25.0
-numt = 1000
-
-rabi = Rabi(R=R, λ=0.75, δ=0.5, μ=μ, ν=ν)
-
 result = Compute()
-Save("$(PATH)lindblad_$(R).txt", result)
+Save("$(PATH)lindblad_100.txt", result)
