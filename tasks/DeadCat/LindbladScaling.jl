@@ -1,6 +1,6 @@
 using Distributed
 
-@everywhere  const WORKERS = 16
+@everywhere const WORKERS = 2
 
 if nprocs() <= WORKERS
     addprocs(WORKERS + 1 - nprocs())
@@ -8,8 +8,8 @@ end
 
 @everywhere include("../../Rabi.jl")
 
-# @everywhere const PATH = "d:/results/Rabi/deadcat/f5/"
-@everywhere const PATH = ""
+@everywhere const PATH = "d:/results/Rabi/deadcat/f5/"
+# @everywhere const PATH = ""
 
 function Compute()
     R = 100.0
@@ -48,5 +48,23 @@ function Save(fname, data)
     end
 end
 
-result = Compute()
+function Individual()
+    R = 100.0
+    μ = 0.1325 / R
+    ν = μ
+    
+    mint = 0.0
+    maxt = 50.0
+    numt = 1001
+
+    rabi = Rabi(R=R, λ=0.75, δ=0.5, μ=μ, ν=ν)
+
+    ds = [0.0 0.01 0.02 0.05 0.1]
+    
+    for d = ds
+        ExpectationValuesLindblad(rabi, [:q=>X(rabi)], [d * A(rabi)]; mint=mint, maxt=maxt, numt=numt, showGraph=true, saveGraph=true, fname="A_$(d)_", saveData=true, asymptotics=false)
+    end
+end
+
+result = Individual()
 Save("$(PATH)lindblad_100.txt", result)

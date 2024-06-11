@@ -8,7 +8,7 @@ BLAS.set_num_threads(1)     # To prevent the Stack Overflow error
 const PATH = "d:/results/Rabi/deadcat/"
 
 R = 50.0
-μ = 0.13 / R
+μ = 0.132 / R
 ν = μ
 
 c = 0.5
