@@ -12,16 +12,12 @@ function Export(fname, xs, ys, zs)
 end
 
 function Calculate()
-    R = 200
+    R = 500
     λ = 0.75
 
     rabi = Rabi(R=R, λ=λ, δ=0.5)
     Ψ0 = ΨGS(rabi)
     operator = X(rabi)
-
-    minr = 0
-    mint = 0
-    minμ = 0
 
     maxμ = 0.26 / R
     i = 0
@@ -41,20 +37,9 @@ function Calculate()
         u = U(system, t)
         Ψ = u * Ψ0      # Initial state
 
-        r = real(expect(operator, Ψ))
-        mr = 0
-
-        if r < minr
-            mr = r
-            mint = t
-            minμ = μ
-        end
-
-        println("$i $(system) t = $t, r = $r, Δ = $(r - mr)")
-
-        minr = mr
-
-        return r
+        result  = real(expect(operator, Ψ))
+        println("$i $(system) t = $t, min = $result")
+        return result
     end
 
     time = @elapsed result = optimize(f, [0.13 / R, 20])
@@ -63,7 +48,7 @@ function Calculate()
     println("Time: $time")
     println("Minimum: $(result.minimum) at $(result.minimizer)")
 
-    return minμ, mint, minr, result
+    return result
 end
 
 result = Calculate()
