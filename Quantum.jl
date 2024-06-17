@@ -137,16 +137,6 @@ function Wigner(system::QuantumSystem; husimi=false, Ψ0=nothing, ts=[0,1,2], in
         saveData && Export("$(PATH)$(title)_$(system)_$tstr$logstr.txt", xs, ys, w)
     end
 
-    opvalues = nothing
-    ρ = nothing
-    w = nothing
-    Ψt = nothing
-    ps = nothing
-    p = nothing
-    psp = nothing
-
-    GC.gc()
-
     return true
 end
 
