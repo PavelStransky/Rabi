@@ -1,6 +1,6 @@
 using Distributed
 
-@everywhere const WORKERS = 2
+@everywhere const WORKERS = 8
 
 if nprocs() <= WORKERS
     addprocs(WORKERS + 1 - nprocs())
@@ -13,10 +13,10 @@ end
 
 function Compute()
     R = 100.0
-    μ = 0.1325 / R
+    μ = 0.12948 / R
     ν = μ
     
-    ds = LinRange(0, 0.15, 151)
+    ds = LinRange(0, 0.4, 201)
     
     mint = 0.0
     maxt = 30.0
@@ -24,7 +24,7 @@ function Compute()
     
     rabi = Rabi(R=R, λ=0.75, δ=0.5, μ=μ, ν=ν)
     
-    time = @elapsed evs = pmap((d)->ExpectationValuesLindblad(rabi, [:q=>X(rabi)], [d * A(rabi)]; mint=mint, maxt=maxt, numt=numt, showGraph=false, saveGraph=false, fname="A_", saveData=true, asymptotics=false), ds)
+    time = @elapsed evs = pmap((d)->ExpectationValuesLindblad(rabi, [:q=>X(rabi)], [sqrt(d / R) * A(rabi)]; mint=mint, maxt=maxt, numt=numt, showGraph=false, saveGraph=false, fname="A_", saveData=true, asymptotics=false), ds)
     println("Elapsed time: $time")
 
     result = []
@@ -50,7 +50,7 @@ end
 
 function Individual()
     R = 100.0
-    μ = 0.1325 / R
+    μ = 0.12948 / R
     ν = μ
     
     mint = 0.0
@@ -59,12 +59,13 @@ function Individual()
 
     rabi = Rabi(R=R, λ=0.75, δ=0.5, μ=μ, ν=ν)
 
-    ds = [0.0 0.01 0.02 0.05 0.1]
+    ds = [0 0.02 0.1 0.25]
     
     for d = ds
-        ExpectationValuesLindblad(rabi, [:q=>X(rabi)], [d * A(rabi)]; mint=mint, maxt=maxt, numt=numt, showGraph=true, saveGraph=true, fname="A_$(d)_", saveData=true, asymptotics=false)
+        ExpectationValuesLindblad(rabi, [:q=>X(rabi)], [sqrt(d / R) * A(rabi)]; mint=mint, maxt=maxt, numt=numt, showGraph=true, saveGraph=true, fname="A_$(d)_", saveData=true, asymptotics=false)
     end
 end
 
 result = Individual()
-Save("$(PATH)lindblad_100.txt", result)
+# result = Compute()
+# Save("$(PATH)lindblad_100.txt", result)

@@ -43,41 +43,51 @@ function Export(fname, xs, ys, zs)
     end
 end
 
-function Calculate()
-    Rs = [40 50 75 100 150 200]
+function Calculate(showGraph=false)
+    Rs = [50 100 200 300 400 500 800 1000]
+    Rs = [300 400 500 800 1000]
+    Rs = [100]
+
+    λ = 0.55
+    λ = 0.75
+
+    mint = 20.0
+    maxt = 30.0
+    numt = 4000
 
     for R in Rs
         minx = 0.0
-        maxx = 20 * 0.135 / R
-        numx = 1000
+        maxx = 12 * 0.57 / R
+        maxx = 12 * 0.13 / R
+        numx = 3000
         μs = LinRange(minx, maxx, numx + 1)
     
-        mint = 16.0
-        maxt = 26.0
-        numt = 1000
-
-        rabi = Rabi(R=R, λ=0.75, δ=0.5)
+        rabi = Rabi(R=R, λ=λ, δ=0.5)
 
         result = DQPT(rabi, μs=μs, mint=mint, maxt=maxt, numt=numt + 1, showGraph=false, parallel=true, saveData=false)
-        mins, maxs = FindExtremes(result, 5, margin=maximum([trunc(Int, 1000 / R), 10]))
+        mins, maxs = FindExtremes(result, 5, margin=maximum([trunc(Int, 2000 / R), 20]))
 
         xs = [(maxt - mint) / numt * mins[j][2] + mint for j = 1:length(mins)]
         ys = [(maxx - minx) / numx * mins[j][1] + minx for j = 1:length(mins)]
         zs = [mins[j][3] for j = 1:length(mins)]
 
-        p = scatter(xs, ys, title="R=$(R)", legend=false)
-        display(p)
+        if showGraph
+            p = scatter(xs, ys, title="R=$(R)", legend=false)
+            display(p)
+        end
 
-        Export("$(PATH)mins_$R.txt", xs, ys, zs)
+        Export("$(PATH)lambda=$(λ)_mins_R=$(R).txt", xs, ys, zs)
 
         xs = [(maxt - mint) / numt * maxs[j][2] + mint for j = 1:length(maxs)]
         ys = [(maxx - minx) / numx * maxs[j][1] + minx for j = 1:length(maxs)]
         zs = [maxs[j][3] for j = 1:length(maxs)]
 
-        p = scatter(xs, ys, title="R=$(R)", legend=false)
-        display(p)
+        if showGraph
+            p = scatter(xs, ys, title="R=$(R)", legend=false)
+            display(p)
+        end
 
-        Export("$(PATH)maxs_$R.txt", xs, ys, zs)
+        Export("$(PATH)lambda=$(λ)_maxs_R=$(R).txt", xs, ys, zs)
     end
 end
 
