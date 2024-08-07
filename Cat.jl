@@ -4,7 +4,7 @@ include("QuarticOscillator.jl")
 
 pyplot(size=(1000, 1000))
 
-const PATH = "d:\\results\\Rabi\\"
+const PATH = "d:\\results\\Rabi\\oscillator\\"
 
 function RabiCat()
     R = 100
@@ -43,17 +43,19 @@ function RabiCat()
 end
 
 function CUSPCat()
-    cusp = CUSP(N=5000, ħ=0.1, a=0.001)
+    for a = LinRange(0, 0.02, 101)
+        cusp = CUSP(N=2000, ħ=0.1, a=a)
     #_, pld = LevelDynamics(cusp, ps=LinRange(-4, 1, 401), type=:b, limit=100, ylims=(-2,2))
 
-    ts = LinRange(0, 2000, 201)
+        ts = LinRange(0, 1500, 301)
 
-    Ψ0 = coherentstate(Basis(cusp), 0)
-    result = ExpectationValues(cusp, AllOperators(cusp); Ψ0=Ψ0, mint=0.0, maxt=2000.0, numt=1000, showGraph=true, saveGraph=true, saveData=true, asymptotics=false)
+        Ψ0 = coherentstate(Basis(cusp), 0)
+        result = ExpectationValues(cusp, AllOperators(cusp); Ψ0=Ψ0, mint=0.0, maxt=1500.0, numt=301, showGraph=true, saveGraph=true, saveData=true, asymptotics=false)
+    end
     
-    sf = StrengthFunction(cusp, Ψ0)
-    p = scatter(sf[1], sf[2], markeralpha=0.7, markerstrokewidth=0, markersize=6, xlims=(-2, 2))
-    display(p)
+    #sf = StrengthFunction(cusp, Ψ0)
+    #p = scatter(sf[1], sf[2], markeralpha=0.7, markerstrokewidth=0, markersize=6, xlims=(-2, 2))
+    #display(p)
 end
 
 CUSPCat()

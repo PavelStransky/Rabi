@@ -8,7 +8,7 @@ include("../../Calculation.jl")
 function Run()
     R = 100
     λ = 0.75
-    μ = 0.135341379 / R
+    μ = 0.130 / R
     δ = 0.5
     ν = μ
     n = 500
@@ -27,7 +27,10 @@ function Run()
     start = 1
     finish = length(ts)
 
-    wigner = pmap((i)->Wigner(rabi; Ψ0=Ψ0, operators=[:P=>PGS(rabi), :Π=>Parity(rabi), :q=>X(rabi), :Jx=>Jx(rabi)], ts=ts, index=[i], xs=LinRange(-1.2, 1.2, num), ys=LinRange(-0.6, 0.6, num), clim=(-0.1, 0.1), saveData=true, showGraph=false, marginals=false), start:finish)
+    # wigner = pmap((i)->Wigner(rabi; Ψ0=Ψ0, operators=[:P=>PGS(rabi), :Π=>Parity(rabi), :q=>X(rabi), :Jx=>Jx(rabi)], ts=ts, index=[i], xs=LinRange(-1.7, 1.7, num), ys=LinRange(-0.8, 0.8, num), clim=(-0.1, 0.1), saveData=true, showGraph=false, marginals=false), start:finish)
+
+    rabi = Rabi(R=R, δ=δ, λ=λ, μ=μ, ν=ν)
+    wigner = pmap((i)->Wigner(rabi; operators=[:P=>PGS(rabi), :Π=>Parity(rabi), :q=>X(rabi), :Jx=>Jx(rabi)], ts=ts, index=[i], xs=LinRange(-1.7, 1.7, 3*num), ys=LinRange(-0.8, 0.8, 3*num), clim=(-0.1, 0.1), saveData=true, showGraph=false, marginals=true), start:finish)
 end
 
 Run()

@@ -3,7 +3,7 @@ pyplot(size=(1200, 1200))
 const PATH = "d:/results/Rabi/deadcat/f3/"
 # const PATH = ""
 
-R = 1000.0
+R = 200.0
 μ = 0.129888 / R
 # μ = 1.43 / R
 

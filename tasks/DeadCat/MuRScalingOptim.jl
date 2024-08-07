@@ -12,7 +12,7 @@ function Export(fname, xs, ys, zs)
 end
 
 function Calculate()
-    R = 500
+    R = 400
     λ = 0.75
 
     rabi = Rabi(R=R, λ=λ, δ=0.5)
@@ -22,13 +22,17 @@ function Calculate()
     maxμ = 0.26 / R
     i = 0
 
+    mint = 20
+    startt = 25
+    maxt = 30
+
     function f(x)
         μ = x[1]
         t = x[2]
 
         i += 1
 
-        if μ > maxμ || μ < 0 || t < 17 || t > 27
+        if μ > maxμ || μ < 0 || t < mint || t > maxt
             return 0
         end
 
@@ -42,7 +46,9 @@ function Calculate()
         return result
     end
 
-    time = @elapsed result = optimize(f, [0.13 / R, 20])
+    time = @elapsed result = optimize(f, [0.13 / R, startt])
+
+    # The following method is much slower
     # result = optimize(f, [0, maxμ], [15, 25], [0.0013, 20.3])
 
     println("Time: $time")
