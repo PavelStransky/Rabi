@@ -74,10 +74,9 @@ function Wigner(system::QuantumSystem; husimi=false, Ψ0=nothing, ts=[0,1,2], in
 
     opvalues = [name=>[ExpectationValue(name, operator, Ψ, system) for Ψ in Ψt] for (name, operator) in operators]
 
-    xss = xs * sqrt(2.0 * Size(system))
-    yss = ys * sqrt(2.0 * Size(system))
+    xss = xs * sqrt(Size(system))
+    yss = ys * sqrt(Size(system))
 
-    if index === nothing index = 1:length(tout) end
     title = husimi ? "Husimi" : "Wigner"
 
     for i = index
