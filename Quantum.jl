@@ -33,7 +33,7 @@ end
 
 function StrengthFunction(system::QuantumSystem, keti)
     ef, vf = eigenstates(system)
-    sf = [abs(dagger(vf[j]) * keti)  for (j, _) in enumerate(vf)]
+    sf = [abs(dagger(vf[j]) * keti)^2  for (j, _) in enumerate(vf)]
     parity = [ExpectationValue(Parity(system), vf[j]) for (j, _) in enumerate(vf)]
 
     return ef, sf, parity
