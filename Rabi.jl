@@ -66,21 +66,21 @@ A(rabi::Rabi) = tensor(destroy(FockBasis(rabi)), one(SpinBasis(rabi)))
 Ad(rabi::Rabi) = tensor(create(FockBasis(rabi)), one(SpinBasis(rabi)))
 N(rabi::Rabi) = tensor(number(FockBasis(rabi)), one(SpinBasis(rabi)))
 
-Jx(rabi::Rabi) = rabi.j * tensor(one(FockBasis(rabi)), sigmax(SpinBasis(rabi)))
-Jy(rabi::Rabi) = rabi.j * tensor(one(FockBasis(rabi)), sigmay(SpinBasis(rabi)))
-Jz(rabi::Rabi) = rabi.j * tensor(one(FockBasis(rabi)), sigmaz(SpinBasis(rabi)))
+Jx(rabi::Rabi) = 0.5 * tensor(one(FockBasis(rabi)), sigmax(SpinBasis(rabi)))
+Jy(rabi::Rabi) = 0.5 * tensor(one(FockBasis(rabi)), sigmay(SpinBasis(rabi)))
+Jz(rabi::Rabi) = 0.5 * tensor(one(FockBasis(rabi)), sigmaz(SpinBasis(rabi)))
 
-Jp(rabi::Rabi) = rabi.j * tensor(one(FockBasis(rabi)), sigmap(SpinBasis(rabi)))
-Jm(rabi::Rabi) = rabi.j * tensor(one(FockBasis(rabi)), sigmam(SpinBasis(rabi)))
+Jp(rabi::Rabi) = 0.5 * tensor(one(FockBasis(rabi)), sigmap(SpinBasis(rabi)))
+Jm(rabi::Rabi) = 0.5 * tensor(one(FockBasis(rabi)), sigmam(SpinBasis(rabi)))
 
 Id(rabi::Rabi) = tensor(one(FockBasis(rabi)), one(SpinBasis(rabi)))
 M(rabi::Rabi) = (N(r) + Jz(r) + rabi.j * Id(rabi))
 
-X(rabi::Rabi) = 1.0 / sqrt(2.0 * rabi.R) * (A(rabi) + Ad(rabi))
-P(rabi::Rabi) = im / sqrt(2.0 * rabi.R) * (Ad(rabi) - A(rabi))
+X(rabi::Rabi) = 1.0 / sqrt(4.0 * rabi.R * rabi.j) * (A(rabi) + Ad(rabi))
+P(rabi::Rabi) = im / sqrt(4.0 * rabi.R * rabi.j) * (Ad(rabi) - A(rabi))
 
 " Hamiltonian "
-H0(rabi::Rabi) = rabi.ω * N(rabi) + rabi.R * rabi.ω * Jz(rabi)
+H0(rabi::Rabi) = rabi.ω * N(rabi) + rabi.R * rabi.ω * (Jz(rabi) + rabi.j * Id(rabi))
 Hλ(rabi::Rabi) = (1 + rabi.δ) * (Ad(rabi) * Jm(rabi) + A(rabi) * Jp(rabi)) + (1 - rabi.δ) * (Ad(rabi) * Jp(rabi) + A(rabi) * Jm(rabi))
 Hμ(rabi::Rabi) = (Ad(rabi) + A(rabi)) * Jz(rabi)
 Hν(rabi::Rabi) = rabi.j * (Ad(rabi) + A(rabi))
@@ -88,7 +88,8 @@ Hη(rabi::Rabi) = Jx(rabi)
 
 # It is not clear to me why the factor 2 is here 
 # (but it makes it consistent with Dicke in CollectiveModels and with the Python code)
-H(rabi::Rabi) = H0(rabi) + 2.0 * sqrt(rabi.R) * (rabi.λ * Hλ(rabi) + rabi.μ * Hμ(rabi) + rabi.ν * Hν(rabi) + rabi.η * Hη(rabi))
+# Coupling normalized to give the critical coupling always at λ = 1
+H(rabi::Rabi) = H0(rabi) + 2.0 * sqrt(2.0 * rabi.R * rabi.j) * (0.25 / rabi.j * rabi.λ * rabi.ω * Hλ(rabi) + rabi.μ * Hμ(rabi) + rabi.ν * Hν(rabi) + rabi.η * Hη(rabi))
 
 " Evolution operator "
 U(rabi::Rabi, t::Float64) = exp(dense(-im * t * H(rabi)))
@@ -107,7 +108,9 @@ Squeeze(rabi::Rabi) = exp(dense(0.5 * (conj(ssp(rabi)) * create(FockBasis(rabi))
 PGSP(rabi::Rabi) = projector(ΨGSP(rabi))
 
 " Parity operator "
-Parity(rabi::Rabi) = tensor(Operator(FockBasis(rabi), Matrix(Diagonal([isodd(i) ? -1.0 : 1.0 for i in 1:(rabi.N+1)]))), sigmaz(SpinBasis(rabi)))
+Parity(rabi::Rabi) = tensor(Operator(FockBasis(rabi), Matrix(Diagonal([isodd(i) ? -1.0 : 1.0 for i=0:rabi.N]))),
+                        Operator(SpinBasis(rabi), Matrix(Diagonal([isodd(i) ? -1.0 : 1.0 for i=(2*rabi.j:-1:0)]))))
+#Parity(rabi::Rabi) = tensor(Operator(FockBasis(rabi), Matrix(Diagonal([isodd(i) ? -1.0 : 1.0 for i in 1:(rabi.N+1)]))), sigmaz(SpinBasis(rabi)))
     
 function ProjectParity(rabi::Rabi, vector1::Ket, vector2::Ket)
     p = Parity(rabi)
@@ -118,10 +121,11 @@ function ProjectParity(rabi::Rabi, vector1::Ket, vector2::Ket)
     ev = eigen(m)
     println(ev)
 
-    a = vector1 * ev.vectors[1, 1] + vector2 * ev.vectors[2, 1]
-    b = vector1 * ev.vectors[1, 2] + vector2 * ev.vectors[2, 2]
+    a = vector1 * ev.vectors[1, 2] + vector2 * ev.vectors[2, 2]
+    b = vector1 * ev.vectors[1, 1] + vector2 * ev.vectors[2, 1]
 
     return a, b
+
 end
 
 function PlotΨ(rabi::Rabi, Ψ)
@@ -148,10 +152,10 @@ end
 
 function eigenstates(rabi::Rabi) 
     energies, vectors = QuantumOptics.eigenstates(dense(H(rabi)))
-    return energies / rabi.R, vectors
+    return energies / (2 * rabi.j * rabi.R * rabi.ω), vectors
 end
 
 function eigenstates(rabi::Rabi, limit) 
     energies, vectors = QuantumOptics.eigenstates(dense(H(rabi)), limit)
-    return energies / rabi.R, vectors
+    return energies / (2 * rabi.j * rabi.R * rabi.ω), vectors
 end
