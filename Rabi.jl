@@ -117,9 +117,7 @@ function ProjectParity(rabi::Rabi, vector1::Ket, vector2::Ket)
     m = real([dagger(vector1) * p * vector1 dagger(vector1) * p * vector2;
         dagger(vector2) * p * vector1 dagger(vector2) * p * vector2])
     
-    println(m)
     ev = eigen(m)
-    println(ev)
 
     a = vector1 * ev.vectors[1, 2] + vector2 * ev.vectors[2, 2]
     b = vector1 * ev.vectors[1, 1] + vector2 * ev.vectors[2, 1]
