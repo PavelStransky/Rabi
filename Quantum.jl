@@ -58,7 +58,7 @@ function Overlap(vectors; limit=nothing)
     return result, p
 end
 
-function Wigner(system::QuantumSystem; husimi=false, Ψ0=nothing, ts=[0,1,2], index=nothing, operators=[], marginals=false, xs=LinRange(-1, 1, 101), ys=nothing, showGraph=true, saveData=true, saveGraph=true, log=false, clim=(-0.2, 0.2), kwargs...)
+function Wigner(system::QuantumSystem; husimi=false, Ψ0=nothing, maxt=30.0, numt=31, firstIndex=1, lastIndex=-1, operators=[], marginals=false, xs=LinRange(-1, 1, 101), ys=nothing, showGraph=true, saveData=true, saveGraph=true, log=false, clim=(-0.2, 0.2), postProcess=nothing, postProcessParams=nothing, kwargs...)
     """ Wigner function """
 
     # Range in y direction
@@ -66,6 +66,12 @@ function Wigner(system::QuantumSystem; husimi=false, Ψ0=nothing, ts=[0,1,2], in
     
     # Initial state
     if Ψ0 === nothing Ψ0 = ΨGS(system) end
+
+    factor = round(Int, 400 / numt)
+    if factor < 1 factor = 1 end
+    ts = LinRange(0, maxt, numt * factor + 1)
+
+    println("Wigner $(system), maxt=$maxt, numt=$numt, factor=$factor, firstIndex=$firstIndex, lastIndex=$lastIndex")
 
     # Schroedinger time evolution
     print("Schrödinger ", system, "...")
@@ -79,15 +85,19 @@ function Wigner(system::QuantumSystem; husimi=false, Ψ0=nothing, ts=[0,1,2], in
 
     title = husimi ? "Husimi" : "Wigner"
 
-    for i = index
+    if lastIndex < 0 || lastIndex > numt * factor
+        lastIndex = numt * factor
+    end
+
+    for i = firstIndex:factor:lastIndex
         tstr = format(tout[i], precision=2)
 
-        print("T[$i]=$tstr trace...")
+        print("T[$i]=$tstr")
         time = @elapsed ρ = DensityMatrix(system, Ψt[i])
-        print("$time $title...")
+        print(" trace...$(time)s")
 
         time = @elapsed w = husimi ? real.(qfunc(ρ, xss, yss)) : wigner(ρ, xss, yss)
-        print("$time display...")
+        println(" $title...$(time)s")
 
         logstr = ""
         if log
@@ -99,7 +109,7 @@ function Wigner(system::QuantumSystem; husimi=false, Ψ0=nothing, ts=[0,1,2], in
         end            
 
         time = @elapsed begin
-            p = heatmap(xs, ys, transpose(w), color=:bwr, grid=false, title="$title $system, \$t=$tstr\$", xlabel=raw"$q$", ylabel=raw"$p$", clim=clim, kwargs...)
+            p = heatmap(xs, ys, transpose(w), c=:bwr, grid=false, title="$title $system, \$t=$tstr\$", xlabel=raw"$q$", ylabel=raw"$p$", clim=clim, kwargs...)
 
             len = length(opvalues)
             psp = Array{Any}(undef, len)
@@ -121,6 +131,10 @@ function Wigner(system::QuantumSystem; husimi=false, Ψ0=nothing, ts=[0,1,2], in
                 saveData && Export("$(PATH)$(title)_$(system)_$(i)_$(tstr)_marginal_p", ys, marginal_y)
             end
 
+            if postProcess !== nothing
+                p = postProcess(system, tout[i], p, postProcessParams)
+            end
+
             if len > 0
                 ps = len == 1 ? plot(psp[1]) : plot(psp..., layout=grid(1, len))
                 p = plot(ps, p, layout=grid(2, 1, heights=[0.2 ,0.8]))
@@ -131,7 +145,7 @@ function Wigner(system::QuantumSystem; husimi=false, Ψ0=nothing, ts=[0,1,2], in
             saveGraph && savefig(p, "$(PATH)$(title)_$(system)_$i$logstr.png")
         end
 
-        println(time)
+        println("display...$(time)s")
 
         saveData && Export("$(PATH)$(title)_$(system)_$tstr$logstr.txt", xs, ys, w)
     end
