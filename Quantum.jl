@@ -140,7 +140,6 @@ function Wigner(system::QuantumSystem; husimi=false, Ψ0=nothing, maxt=30.0, num
                 p = plot(ps, p, layout=grid(2, 1, heights=[0.2 ,0.8]))
             end
 
-
             showGraph && display(plot(p))
             saveGraph && savefig(p, "$(PATH)$(title)_$(system)_$i$logstr.png")
         end
