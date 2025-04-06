@@ -350,7 +350,7 @@ function StrengthFunctionMagnitude(rabii; λf_min=-0.5, λf_max=1.0, λf_num=50)
 end
 
 if length(ARGS) > 0
-    firstIndex = parse(Int, ARGS[1]) + 1
+    firstIndex = 50 * parse(Int, ARGS[1]) + 1
     lastIndex = firstIndex + 49
     println("firstIndex = $(firstIndex), lastIndex = $(lastIndex)")
     # println(Plots.backend())
