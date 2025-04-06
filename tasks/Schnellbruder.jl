@@ -1,22 +1,34 @@
 using StatsBase
 using DifferentialEquations
 
+# ENV["GKS_WSTYPE"] = "100"
+
 #Suppress strange warnings
-using PyCall
-pyimport("warnings").filterwarnings("ignore", message=".*No data for colormapping provided.*")
+# using PyCall
+# pyimport("warnings").filterwarnings("ignore", message=".*No data for colormapping provided.*")
 
 include("../Rabi.jl")
 
-const PATH = "d:/results/rabi/schnellbruder/"
+# const PATH = "d:/results/rabi/schnellbruder/"
+const PATH = "/home/stransky/results/"
 
-pyplot(size=(1000, 1000))
+gr()
+default(size=(1080,1080))
 
 function InitialState(rabii)
     _, vs = eigenstates(rabii, 2)    
     a, b = ProjectParity(rabii, vs[1], vs[2])
-    gs = (a + b) / sqrt(2)
+    gs1 = (a + b) / sqrt(2)
+    gs2 = (a - b) / sqrt(2)
 
-    return gs
+    q1 = ExpectationValue("E", X(rabii), gs1, rabii)
+    q2 = ExpectationValue("E", X(rabii), gs2, rabii)
+
+    if q1 < 0
+        return gs1
+    end
+
+    return gs2
 end
 
 """ Evolution of the partial trace and related quantities """
@@ -341,6 +353,7 @@ if length(ARGS) > 0
     firstIndex = parse(Int, ARGS[1]) + 1
     lastIndex = firstIndex + 49
     println("firstIndex = $(firstIndex), lastIndex = $(lastIndex)")
+    # println(Plots.backend())
 
     type = 0
     if length(ARGS) > 1
