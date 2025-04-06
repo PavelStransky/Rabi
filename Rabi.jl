@@ -6,8 +6,6 @@ using LinearAlgebra
 include("Export.jl")
 include("Quantum.jl")
 
-pyplot()
-
 " Rabi (Extended Dicke) type "
 struct Rabi <: QuantumSystem
     N
