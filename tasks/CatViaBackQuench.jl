@@ -47,7 +47,7 @@ end
 function PartialTrace(j)
     R = 20
 
-    λs = LinRange(0, 5.0, 501)
+    λs = LinRange(0, 3.0, 301)
     trace = Array{Float64}(undef, 0)    
     eigen = Array{Float64}(undef, 0)
 
@@ -58,8 +58,9 @@ function PartialTrace(j)
             es, vs = eigenstates(system, 2)
 
             a, b = ProjectParity(system, vs[1], vs[2])
+            gs = (a + b) / sqrt(2)
             
-            ρq = ptrace(a, 1)
+            ρq = ptrace(gs, 1)
             ev, vs = QuantumOptics.eigenstates(ρq)
 
             append!(trace, real(diag(ρq.data)))
@@ -126,7 +127,7 @@ function PartialTraceEvolution(mint=0.0, maxt=10.0, numt=1000)
     println(result[:, 4])
 end
 
-PartialTraceEvolution()
+# PartialTraceEvolution()
 
 # LD(4//2)
 
@@ -134,4 +135,4 @@ PartialTraceEvolution()
 #     StrengthFunction(j // 2)
 # end
 
-# PartialTrace(4//2)
+PartialTrace(1//2)

@@ -10,7 +10,7 @@ function PartialTraceEvolution(mint=0.0, maxt=100.0, numt=1000)
     R = 100
     # Initial state
 
-    λf = 2.5
+    λf = 5
 
     # Initial and final systems
     rabif = Rabi(R=R, λ=λf)
@@ -47,10 +47,18 @@ function PartialTraceEvolution(mint=0.0, maxt=100.0, numt=1000)
             field[i, 3] = 1 / (2 * rabif.λ) + sqrt(8) * rabif.μ * q
             field[i, 4] = sqrt(field[i, 1]^2 + field[i, 2]^2 + field[i, 3]^2)
 
+            for j in 1:3
+                field[i, j] = field[i, j] / field[i, 4]
+            end
+
             spin[i, 1] = ExpectationValue("Jx", Jx(rabif), Ψ, rabif)
             spin[i, 2] = ExpectationValue("Jy", Jy(rabif), Ψ, rabif)
             spin[i, 3] = ExpectationValue("Jz", Jz(rabif), Ψ, rabif)
             spin[i, 4] = sqrt(spin[i, 1]^2 + spin[i, 2]^2 + spin[i, 3]^2)
+
+            for j in 1:3
+                spin[i, j] = spin[i, j] / spin[i, 4]
+            end
 
             Ψ = du * Ψ
         end
