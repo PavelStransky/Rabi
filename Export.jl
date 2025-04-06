@@ -1,11 +1,11 @@
-" Matrix export (for Origin) "
-function Export(fname::String, xs, asymptotics=nothing)
+""" Matrix export (for Origin) """
+function Export(fname::String, xs, ys=nothing)
     fn = fname * ".txt"
     open(fn, "w") do f
         for i = 1:length(xs)
             write(f, "$(xs[i])\t")
-            if asymptotics !== nothing 
-                write(f, join(asymptotics[i,:], "\t")) 
+            if ys !== nothing 
+                write(f, join(ys[i,:], "\t")) 
             end
             write(f, "\n")
         end
