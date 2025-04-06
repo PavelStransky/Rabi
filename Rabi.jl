@@ -2,6 +2,7 @@ using QuantumOptics
 using Statistics
 using LinearAlgebra
 
+
 include("Export.jl")
 include("Quantum.jl")
 
@@ -45,13 +46,34 @@ function Copy(rabi::Rabi; kwargs...)
     return Rabi(; N=N, j=j, ω=ω, R=R, λ=λ, δ=δ, μ=μ, ν=ν, η=η)
 end
     
-Size(rabi::Rabi) = rabi.R
+Size(rabi::Rabi) = 2 * rabi.R * rabi.j
 Dimension(rabi::Rabi) = rabi.N + 1
 
 DensityMatrix(_::Rabi, Ψ) = ptrace(Ψ, 2)
 
 """ Print """
-Base.String(rabi::Rabi) = "Rabi(N=$(rabi.N), ω=$(rabi.ω), R=$(rabi.R), δ=$(rabi.δ), λ=$(rabi.λ), " * (rabi.μ == rabi.ν ? "μ=ν=$(rabi.μ)" : "μ=$(rabi.μ), ν=$(rabi.ν)") * ", η=$(rabi.η))"
+function Base.String(rabi::Rabi) 
+    result = "Rabi(2j=$(Int(2*rabi.j)), ω=$(rabi.ω), R=$(rabi.R), λ=$(rabi.λ)"
+    if rabi.δ != 0
+        result *= ", δ=$(rabi.δ)"
+    end
+    if rabi.μ != 0
+        if rabi.μ == rabi.ν
+            result *= ", μ=ν=$(rabi.μ)"
+        else
+            result *= ", μ=$(rabi.μ)"
+        end
+    end
+    if rabi.ν != 0 && rabi.μ != rabi.ν
+        result *= ", ν=$(rabi.ν)"
+    end
+    if rabi.η != 0
+        result *= ", η=$(rabi.η)"
+    end
+
+    return result * ")"
+end
+
 Base.show(io::IO, rabi::Rabi) = print(io, String(rabi))
 
 " Optimal value of N "
