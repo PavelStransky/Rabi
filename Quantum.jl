@@ -109,14 +109,14 @@ function Wigner(system::QuantumSystem; husimi=false, Ψ0=nothing, maxt=30.0, num
         end            
 
         time = @elapsed begin
-            p = heatmap(xs, ys, transpose(w), c=:bwr, grid=false, title="$title $system, \$t=$tstr\$", xlabel=raw"$q$", ylabel=raw"$p$", clim=clim, kwargs...)
+            p = heatmap(xs, ys, transpose(w), c=:bwr, grid=false, title="$title $system, t=$tstr", xlabel="q", ylabel="p", clim=clim, kwargs...)
 
             len = length(opvalues)
             psp = Array{Any}(undef, len)
             pspi = 1
             for (name, opvalue) in opvalues
                 psp[pspi] = plot(tout, opvalue)
-                psp[pspi] = scatter!(psp[pspi], [tout[i]], [opvalue[i]], markersize=10, markeralpha=0.7, xlabel=raw"$t$", ylabel=Label(name), legend=false)
+                psp[pspi] = scatter!(psp[pspi], [tout[i]], [opvalue[i]], markersize=10, markeralpha=0.7, xlabel=raw"t", ylabel=Label(name), legend=false)
                 pspi += 1
             end
 
