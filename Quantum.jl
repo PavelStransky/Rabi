@@ -3,6 +3,7 @@ using QuantumOptics
 using Statistics
 using LinearAlgebra
 using Formatting
+using Measures
 
 abstract type QuantumSystem end
 
@@ -109,7 +110,7 @@ function Wigner(system::QuantumSystem; husimi=false, Ψ0=nothing, maxt=30.0, num
         end            
 
         time = @elapsed begin
-            p = heatmap(xs, ys, transpose(w), c=:bwr, grid=false, title="$title $system, t=$tstr", xlabel="q", ylabel="p", clim=clim, kwargs...)
+            p = heatmap(xs, ys, transpose(w), c=:bwr, grid=false, title="$title $system, t=$tstr", xlabel="q", ylabel="p", clim=clim, left_margin=10mm, bottom_margin=5mm, kwargs...)
 
             len = length(opvalues)
             psp = Array{Any}(undef, len)
@@ -119,6 +120,7 @@ function Wigner(system::QuantumSystem; husimi=false, Ψ0=nothing, maxt=30.0, num
                 psp[pspi] = scatter!(psp[pspi], [tout[i]], [opvalue[i]], markersize=10, markeralpha=0.7, xlabel=raw"t", ylabel=Label(name), legend=false)
                 pspi += 1
             end
+            psp[len] = plot!(psp[len], bottom_margin=5mm)
 
             if marginals
                 marginal_x = vec(sum(w, dims=2))
@@ -136,8 +138,8 @@ function Wigner(system::QuantumSystem; husimi=false, Ψ0=nothing, maxt=30.0, num
             end
 
             if len > 0
-                ps = len == 1 ? plot(psp[1]) : plot(psp..., layout=grid(1, len))
-                p = plot(ps, p, layout=grid(2, 1, heights=[0.2 ,0.8]))
+                ps = len == 1 ? plot(psp[1]) : plot(psp..., layout=grid(len, 1))
+                p = plot(p, ps, layout=grid(1, 2, widths=[0.7,0.3]))
             end
 
             showGraph && display(plot(p))

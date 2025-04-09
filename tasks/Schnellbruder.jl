@@ -21,7 +21,7 @@ include("../Rabi.jl")
 const PATH = "/home/stransky/results/"
 
 gr()
-default(size=(1080,1080))
+default(size=(1920,1080), dpi=300)
 
 function InitialState(rabii)
     _, vs = eigenstates(rabii, 2)    
@@ -379,7 +379,7 @@ if length(ARGS) > 0
         rabi = Rabi(R=50, λ=1.5, δ=0.0, j=4//2)
     end
 
-    WignerFunctions(rabi, λf=-0.37, range=1.2, wignerMesh=601, maxt=300, numt=6000, showGraph=false, firstIndex=firstIndex, lastIndex=lastIndex)
+    WignerFunctions(rabi, λf=-0.37, range=1.2, wignerMesh=501, maxt=300, numt=6000, showGraph=false, firstIndex=firstIndex, lastIndex=lastIndex, marginals=true)
 
     exit()
 end
