@@ -1,9 +1,19 @@
 using StatsBase
 using DifferentialEquations
 
-#Suppress strange warnings
-using PyCall
-pyimport("warnings").filterwarnings("ignore", message=".*No data for colormapping provided.*")
+# Run at IPNP36:
+#     - python3 CreateJobs.py
+#       creates jobs.txt file with all the jobs
+#     - parallel -j 24 --eta --joblog joblog.txt --results logs < jobs.txt
+#       runs jobs.txt at 24 cores using a simple "parallel" scheduler; jobs are "nice" and all results are logged
+
+#     Creating the video:
+#     - ffmpeg -f lavfi -t 3 -i color=black:s=1920x1080:r=30 -framerate 30 -i "%d.png" -i music.mp3 -filter_complex "[1:v]scale=iw*min(1920/iw\,1080/ih):ih*min(1920/iw\,1080/ih),pad=1920:1080:(1920-iw*min(1920/iw\,1080/ih))/2:(1080-ih*min(1920/iw\,1080/ih))/2:color=black,fade=t=in:st=0:d=1[img]; [0:v][img]concat=n=2:v=1:a=0[outv]" -map "[outv]" -map 2:a -preset slow -crf 18 -c:v libx264 -pix_fmt yuv420p -c:a aac -profile:v high out.mp4
+
+
+#Suppress strange warnings if using pyplot
+# using PyCall
+# pyimport("warnings").filterwarnings("ignore", message=".*No data for colormapping provided.*")
 
 include("../Rabi.jl")
 
@@ -16,15 +26,26 @@ include("../Rabi.jl")
 
 
 const PATH = "d:/results/rabi/schnellbruder/"
+# const PATH = "d:/results/rabi/schnellbruder/"
+const PATH = "/home/stransky/results/"
 
-pyplot(size=(1000, 1000))
+gr()
+default(size=(1920,1080), dpi=300)
 
 function InitialState(rabii)
     _, vs = eigenstates(rabii, 2)    
     a, b = ProjectParity(rabii, vs[1], vs[2])
-    gs = (a + b) / sqrt(2)
+    gs1 = (a + b) / sqrt(2)
+    gs2 = (a - b) / sqrt(2)
 
-    return gs
+    q1 = ExpectationValue("E", X(rabii), gs1, rabii)
+    q2 = ExpectationValue("E", X(rabii), gs2, rabii)
+
+    if q1 < 0
+        return gs1
+    end
+
+    return gs2
 end
 
 """ Evolution of the partial trace and related quantities """
@@ -240,7 +261,7 @@ function WignerFunctions(rabii; λf=0.5, wignerMesh=301, range=1.6, maxt=30, num
     if log
         clim = (-6, 6)
     else
-        clim = (-0.1, 0.1)
+        clim = (-0.08, 0.08)
     end
 
     Wigner(rabif; Ψ0=gs, operators=[:Jx=>Jx(rabif), :Jy=>Jy(rabif), :Jz=>Jz(rabif)], firstIndex=firstIndex, lastIndex=lastIndex,
@@ -346,9 +367,10 @@ function StrengthFunctionMagnitude(rabii; λf_min=-0.5, λf_max=1.0, λf_num=50)
 end
 
 if length(ARGS) > 0
-    firstIndex = 50 * parse(Int, ARGS[1]) + 1
-    lastIndex = firstIndex + 49
+    firstIndex = 30 * parse(Int, ARGS[1]) + 1
+    lastIndex = firstIndex + 29
     println("firstIndex = $(firstIndex), lastIndex = $(lastIndex)")
+    println(Plots.backend())
 
     type = 0
     if length(ARGS) > 1
@@ -366,7 +388,7 @@ if length(ARGS) > 0
         rabi = Rabi(R=50, λ=1.5, δ=0.0, j=4//2)
     end
 
-    WignerFunctions(rabi, λf=-0.37, range=1.2, wignerMesh=501, maxt=300, numt=3000, showGraph=false, firstIndex=firstIndex, lastIndex=lastIndex)
+    WignerFunctions(rabi, λf=-0.37, range=1.5, wignerMesh=501, maxt=300, numt=6000, showGraph=false, firstIndex=firstIndex, lastIndex=lastIndex, marginals=true)
 
     exit()
 end

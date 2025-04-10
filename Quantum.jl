@@ -3,6 +3,7 @@ using QuantumOptics
 using Statistics
 using LinearAlgebra
 using Formatting
+using Measures
 
 abstract type QuantumSystem end
 
@@ -109,24 +110,25 @@ function Wigner(system::QuantumSystem; husimi=false, Ψ0=nothing, maxt=30.0, num
         end            
 
         time = @elapsed begin
-            p = heatmap(xs, ys, transpose(w), c=:bwr, grid=false, title="$title $system, \$t=$tstr\$", xlabel=raw"$q$", ylabel=raw"$p$", clim=clim, kwargs...)
+            p = heatmap(xs, ys, transpose(w), c=:bwr, grid=false, title="$title $system, t=$tstr", xlabel="q", ylabel="p", clim=clim, left_margin=10mm, bottom_margin=5mm, kwargs...)
 
             len = length(opvalues)
             psp = Array{Any}(undef, len)
             pspi = 1
             for (name, opvalue) in opvalues
                 psp[pspi] = plot(tout, opvalue)
-                psp[pspi] = scatter!(psp[pspi], [tout[i]], [opvalue[i]], markersize=10, markeralpha=0.7, xlabel=raw"$t$", ylabel=Label(name), legend=false)
+                psp[pspi] = scatter!(psp[pspi], [tout[i]], [opvalue[i]], markersize=10, markeralpha=0.7, xlabel=raw"t", ylabel=Label(name), legend=false)
                 pspi += 1
             end
+            psp[len] = plot!(psp[len], bottom_margin=5mm)
 
             if marginals
                 marginal_x = vec(sum(w, dims=2))
                 marginal_x = marginal_x / (sum(marginal_x) * (xs[2] - xs[1]))
                 marginal_y = vec(sum(w, dims=1))
                 marginal_y = marginal_y / (sum(marginal_y) * (ys[2] - ys[1]))
-                p = plot!(p, xs, (marginal_x * (ys[end] - ys[1]) / 15) .+ ys[1], legend=false)
-                p = plot!(p, xs[end] .- (marginal_y * (xs[end] - xs[1]) / 15), ys)
+                p = plot!(p, xs, (marginal_x * (ys[end] - ys[1]) / 25) .+ ys[1], legend=false)
+                p = plot!(p, xs[end] .- (marginal_y * (xs[end] - xs[1]) / 25), ys)
                 saveData && Export("$(PATH)$(title)_$(system)_$(i)_$(tstr)_marginal_x", xs, marginal_x)
                 saveData && Export("$(PATH)$(title)_$(system)_$(i)_$(tstr)_marginal_p", ys, marginal_y)
             end
@@ -136,10 +138,9 @@ function Wigner(system::QuantumSystem; husimi=false, Ψ0=nothing, maxt=30.0, num
             end
 
             if len > 0
-                ps = len == 1 ? plot(psp[1]) : plot(psp..., layout=grid(1, len))
-                p = plot(ps, p, layout=grid(2, 1, heights=[0.2 ,0.8]))
+                ps = len == 1 ? plot(psp[1]) : plot(psp..., layout=grid(len, 1))
+                p = plot(p, ps, layout=grid(1, 2, widths=[0.7,0.3]))
             end
-
 
             showGraph && display(plot(p))
             saveGraph && savefig(p, "$(PATH)$(title)_$(system)_$i$logstr.png")
