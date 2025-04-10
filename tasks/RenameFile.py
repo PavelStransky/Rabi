@@ -9,6 +9,9 @@ for fname in os.listdir(dir):
     start = fname.find("0.5)_") + 5
     end = fname.find(".png")
 
+    if start == -1 or end == -1:
+        continue
+
     fnames.append(fname)
     energies.append(float(fname[start:end]))
 
