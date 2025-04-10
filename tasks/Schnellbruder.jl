@@ -26,8 +26,8 @@ include("../Rabi.jl")
 #ffmpeg -f lavfi -t 2 -i color=black:s=1920x1080:r=16 -framerate 16 -i "%d.png" -i music.mp3 -filter_complex "[1:v]scale=iw*min(1920/iw\,1080/ih):ih*min(1920/iw\,1080/ih),pad=1920:1080:(1920-iw*min(1920/iw\,1080/ih))/2:(1080-ih*min(1920/iw\,1080/ih))/2:color=black,fade=t=in:st=0:d=2[img]; [0:v][img]concat=n=2:v=1:a=0[outv]" -map "[outv]" -map 2:a -c:v libx264 -pix_fmt yuv420p -c:a aac out.mp4
 
 
-const PATH = "d:/results/rabi/schnellbruder/"
-# const PATH = "/home/stransky/results/"
+# const PATH = "d:/results/rabi/schnellbruder/"
+const PATH = "/home/stransky/results/"
 
 gr()
 default(size=(1920,1080), dpi=300)
@@ -372,133 +372,6 @@ end
 # x, y = StrengthFunctionMagnitude(rabi; λf_min=-1.0, λf_max=1.0, λf_num=100)
 # Export("$(PATH)sf_$(String(rabi))", x, y)
 
-function VisibilityOnSphere(point)
-    # Camera position
-    camera_position = [5.0, -10.0, 5.0]
-
-    # Vector from camera to point
-    camera_to_point = point - camera_position
-
-    # Find the distance from the camera to the point along the line of sight
-    d_camera_to_sphere = norm(camera_position)
-
-    # Check if the point is hidden behind the sphere
-    # If the point's distance to the camera is greater than the distance to the sphere's surface
-    # then the point is visible (in front); otherwise, it’s hidden (behind).
-    distance_to_point = norm(camera_to_point)
-
-    # Determine visibility
-    return distance_to_point < d_camera_to_sphere
-end
-
-function PlotAxis(p)
-    p = plot!(p, [0, 0], [0, 0], [1, 1.5], color=:black, lw=4)
-    p = scatter!(p, [0], [0], [1], markersize=10, color=:black)
-    p = scatter!(p, [0], [0], [-1], markersize=10, color=:black, alpha=0.3)
-
-    for z = -0.95:0.1:1
-        p = plot!(p, [0, 0], [0, 0], [z, z + 0.04], color=:black, alpha=0.3, lw=4)
-    end
-
-    p = plot!(p, [0, 0], [0, 0], [-1.15, -1.05], color=:black, alpha=0.3, lw=4)
-    p = plot!(p, [0, 0], [0, 0], [-1.5, -1.15], color=:black, lw=4)
-end
-
-function PlotSphere()
-    θ = range(0, stop=π, length=100)
-    ϕ = range(0, stop=2π, length=100)
-    x = [sin(t)*cos(p) for t in θ, p in ϕ]
-    y = [sin(t)*sin(p) for t in θ, p in ϕ]
-    z = [cos(t) for t in θ, p in ϕ]
-
-    lim = 1.25
-
-    p = surface(x, y, z, alpha=0.1, legend=false, color=:viridis, camera=(30,30), 
-    grid=false, ticks=nothing, axis=false,
-    xlims=(-lim, lim), ylims=(-lim, lim), zlims=(-lim, lim))
-
-    return p
-end
-
-function PlotLine(p, xs, ys, zs; color=:red, lw=2)
-    visible = VisibilityOnSphere([xs[1], ys[1], zs[1]])
-
-    lx = []
-    ly = []
-    lz = []
-
-    for (x, y, z) in zip(xs, ys, zs)
-        v = VisibilityOnSphere([x, y, z])
-
-        push!(lx, x)
-        push!(ly, y)
-        push!(lz, z)
-
-        if v != visible
-            p = plot!(p, lx, ly, lz, color=:red, alpha=if visible 1.0 else 0.3 end, lw=lw)
-            
-            visible = v
-            lx = [x]
-            ly = [y]
-            lz = [z]
-        end
-    end
-
-    p = plot!(p, lx, ly, lz, color=:red, alpha=if visible 1.0 else 0.3 end, lw=lw)
-
-    return p
-end
-
-function pokus(rabif, t, p, λi)
-    x = []
-    y = []
-    z = []
-
-    for ph = range(0, stop=2π, length=50)
-        # Define a point on the sphere (example: north pole)
-        th = 0.7
-        px, py, pz = sin(th) * cos(ph), sin(th) * sin(ph), cos(th)
-
-        push!(x, px)
-        push!(y, py)
-        push!(z, pz)
-    end
-
-    pa = PlotSphere()
-    pa = PlotAxis(pa)
-    pa = PlotLine(pa, x, y, z, color=:red, lw=4)
-    # pa = plot(pa, margin=-5mm)
-
-    p = plot(p, pa, layout=grid(2, 1, heights=[0.3,0.7]))
-
-    return p
-end
-
-function pokus()
-    x = []
-    y = []
-    z = []
-
-    for ph = range(0, stop=2π, length=50)
-        # Define a point on the sphere (example: north pole)
-        th = 0.9
-        px, py, pz = sin(th) * cos(ph), sin(th) * sin(ph), cos(th)
-
-        push!(x, px)
-        push!(y, py)
-        push!(z, pz)
-    end
-
-    pa = PlotSphere()
-    pa = PlotAxis(pa)
-    pa = PlotLine(pa, x, y, z, color=:red, lw=4)
-    pa = plot!(pa, margin=-40mm)
-    display(pa)
-end
-
-# pokus()
-
-ARGS = ["30", "0"]
 if length(ARGS) > 0
     firstIndex = 30 * parse(Int, ARGS[1]) + 1
     lastIndex = firstIndex + 29
@@ -521,7 +394,7 @@ if length(ARGS) > 0
         rabi = Rabi(R=50, λ=1.5, δ=0.0, j=4//2)
     end
 
-    WignerFunctions(rabi, λf=-0.37, range=1.5, wignerMesh=101, maxt=300, numt=6000, showGraph=false, firstIndex=firstIndex, lastIndex=lastIndex, marginals=true)
+    WignerFunctions(rabi, λf=-0.37, range=1.5, wignerMesh=601, maxt=300, numt=6000, showGraph=false, firstIndex=firstIndex, lastIndex=lastIndex, marginals=true)
 
     exit()
 end
