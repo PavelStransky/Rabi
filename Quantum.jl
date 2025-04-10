@@ -60,7 +60,7 @@ function Overlap(vectors; limit=nothing)
 end
 
 function Wigner(system::QuantumSystem; husimi=false, Ψ0=nothing, maxt=30.0, numt=31, firstIndex=1, lastIndex=-1, operators=[], marginals=false, xs=LinRange(-1, 1, 101), ys=nothing, showGraph=true, saveData=true, saveGraph=true, log=false, clim=(-0.2, 0.2), postProcess=nothing, postProcessParams=nothing, kwargs...)
-    """ Wigner function """
+        """ Wigner function """
 
     # Range in y direction
     if ys === nothing ys = xs end
@@ -138,7 +138,7 @@ function Wigner(system::QuantumSystem; husimi=false, Ψ0=nothing, maxt=30.0, num
             end
 
             if len > 0
-                ps = len == 1 ? plot(psp[1]) : plot(psp..., layout=grid(len, 1))
+                ps = len == 1 ? plot(psp[1]) : plot(psp..., layout=grid(len + 3, 1))
                 p = plot(p, ps, layout=grid(1, 2, widths=[0.7,0.3]))
             end
 
