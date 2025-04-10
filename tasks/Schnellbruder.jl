@@ -8,7 +8,7 @@ using DifferentialEquations
 #       runs jobs.txt at 24 cores using a simple "parallel" scheduler; jobs are "nice" and all results are logged
 
 #     Creating the video:
-#     - ffmpeg -f lavfi -t 5 -i color=black:s=1920x1080:r=15 -framerate 15 -i "%d.png" -i music.mp3 -filter_complex "[1:v]scale=iw*min(1920/iw\,1080/ih):ih*min(1920/iw\,1080/ih),pad=1920:1080:(1920-iw*min(1920/iw\,1080/ih))/2:(1080-ih*min(1920/iw\,1080/ih))/2:color=black,fade=t=in:st=0:d=1[img]; [0:v][img]concat=n=2:v=1:a=0[outv]" -map "[outv]" -map 2:a -shortest -c:v libx264 -pix_fmt yuv420p -c:a aac out.mp4
+#     - ffmpeg -f lavfi -t 3 -i color=black:s=1920x1080:r=30 -framerate 30 -i "%d.png" -i music.mp3 -filter_complex "[1:v]scale=iw*min(1920/iw\,1080/ih):ih*min(1920/iw\,1080/ih),pad=1920:1080:(1920-iw*min(1920/iw\,1080/ih))/2:(1080-ih*min(1920/iw\,1080/ih))/2:color=black,fade=t=in:st=0:d=1[img]; [0:v][img]concat=n=2:v=1:a=0[outv]" -map "[outv]" -map 2:a -preset slow -crf 18 -c:v libx264 -pix_fmt yuv420p -c:a aac -profile:v high out.mp4
 
 
 #Suppress strange warnings if using pyplot
@@ -379,7 +379,7 @@ if length(ARGS) > 0
         rabi = Rabi(R=50, λ=1.5, δ=0.0, j=4//2)
     end
 
-    WignerFunctions(rabi, λf=-0.37, range=1.2, wignerMesh=501, maxt=300, numt=6000, showGraph=false, firstIndex=firstIndex, lastIndex=lastIndex, marginals=true)
+    WignerFunctions(rabi, λf=-0.37, range=1.5, wignerMesh=501, maxt=300, numt=6000, showGraph=false, firstIndex=firstIndex, lastIndex=lastIndex, marginals=true)
 
     exit()
 end
