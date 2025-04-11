@@ -59,14 +59,18 @@ function Overlap(vectors; limit=nothing)
     return result, p
 end
 
-function Wigner(system::QuantumSystem; husimi=false, Ψ0=nothing, maxt=30.0, numt=31, firstIndex=1, lastIndex=-1, operators=[], marginals=false, xs=LinRange(-1, 1, 101), ys=nothing, showGraph=true, saveData=true, saveGraph=true, log=false, clim=(-0.2, 0.2), postProcess=nothing, postProcessParams=nothing, kwargs...)
-        """ Wigner function """
+function Wigner(system::QuantumSystem; husimi=false, Ψ0=nothing, maxt=30.0, numt=31, firstIndex=1, lastIndex=-1, operators=[], operatorsColor=nothing, operatorsLayout=nothing, marginals=false, xs=LinRange(-1, 1, 101), ys=nothing, showGraph=true, saveData=true, saveGraph=true, log=false, clim=(-0.2, 0.2), postProcess=nothing, postProcessParams=nothing, kwargs...)
+    """ Wigner function """
 
     # Range in y direction
     if ys === nothing ys = xs end
     
     # Initial state
     if Ψ0 === nothing Ψ0 = ΨGS(system) end
+
+    if operatorsColor === nothing
+        operatorsColor = [:blue for _ in 1:length(operators)]
+    end
 
     factor = round(Int, 400 / numt)
     if factor < 1 factor = 1 end
@@ -110,17 +114,23 @@ function Wigner(system::QuantumSystem; husimi=false, Ψ0=nothing, maxt=30.0, num
         end            
 
         time = @elapsed begin
-            p = heatmap(xs, ys, transpose(w), c=:bwr, grid=false, title="$title $system, t=$tstr", xlabel="q", ylabel="p", clim=clim, left_margin=10mm, bottom_margin=5mm, kwargs...)
+            p = heatmap(xs, ys, transpose(w), c=:bwr, grid=false, title="$title $system, t=$tstr", xlabel="q", ylabel="p", clim=clim, 
+            left_margin=10mm, bottom_margin=5mm, 
+            kwargs...)
 
             len = length(opvalues)
             psp = Array{Any}(undef, len)
             pspi = 1
             for (name, opvalue) in opvalues
-                psp[pspi] = plot(tout, opvalue)
-                psp[pspi] = scatter!(psp[pspi], [tout[i]], [opvalue[i]], markersize=10, markeralpha=0.7, xlabel=raw"t", ylabel=Label(name), legend=false)
+                psp[pspi] = plot(tout, opvalue, color=operatorsColor[pspi])
+                psp[pspi] = scatter!(psp[pspi], [tout[pspi]], [opvalue[i]], color=operatorsColor[pspi], markersize=6, markeralpha=0.7, 
+                title=Label(name),
+                legend=false)
+                # psp[pspi] = annotate!(psp[pspi], 100, -1, text("t", :black, 10))
                 pspi += 1
             end
-            psp[len] = plot!(psp[len], bottom_margin=5mm)
+
+            # psp[len] = plot!(psp[len], bottom_margin=5mm, left_margin=10mm)
 
             if marginals
                 marginal_x = vec(sum(w, dims=2))
@@ -138,7 +148,7 @@ function Wigner(system::QuantumSystem; husimi=false, Ψ0=nothing, maxt=30.0, num
             end
 
             if len > 0
-                ps = len == 1 ? plot(psp[1]) : plot(psp..., layout=grid(len + 3, 1))
+                ps = plot(psp..., layout=operatorsLayout)
                 p = plot(p, ps, layout=grid(1, 2, widths=[0.7,0.3]))
             end
 
@@ -232,7 +242,7 @@ function ExpectationValues(system::QuantumSystem, operators; Ψ0=nothing, mint=0
             end
         end
 
-        p = plot(ps..., layout=(2, numop ÷ 2); kwargs...)
+        p = plot(ps..., layout=(2, (numop + 1) ÷ 2); kwargs...)
         showGraph && display(p)
         saveGraph && savefig(p, "$(PATH)expectation_$system.png")
     end
