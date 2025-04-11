@@ -185,7 +185,7 @@ function pokus()
 
     gs = InitialState(rabii)
 
-    ev = ExpectationValues(rabif, [:Jx=>Jx(rabif), :Jy=>Jy(rabif), :Jz=>Jz(rabif), :p=>P(rabif), :x=>X(rabif)], Ψ0=gs, mint=0.0, maxt=200.0, numt = 60001, saveGraph=false, saveData=false, asymptotics=false)
+    ev = ExpectationValues(rabif, [:Jx=>Jx(rabif), :Jy=>Jy(rabif), :Jz=>Jz(rabif), :p=>P(rabif), :x=>X(rabif)], Ψ0=gs, mint=0.0, maxt=200.0, numt = 120001, saveGraph=false, saveData=false, asymptotics=false)
     jx = ev[1, :]
     jy = ev[2, :]
     jz = ev[3, :]
@@ -207,7 +207,7 @@ function pokus()
     # jy = jy ./ n
     # jz = jz ./ n
 
-    for j = 1:3000
+    for j = 1:6001
         pa = PlotSphere()
         pa = PlotAxis(pa)
 
@@ -234,8 +234,8 @@ function pokus()
             colourIndex += 1
         end
 
-        maxj = 20 * (j - 1) + 1
-        minj = max(maxj - 4000, 1)
+        maxj = 50 * (j - 1) + 1
+        minj = max(maxj - 10000, 1)
 
         pa = PlotLine(pa, jx[minj:maxj], jy[minj:maxj], jz[minj:maxj], color=:black, lw=1)
         pa = PlotLine(pa, x0[minj:maxj], y0[minj:maxj], z0[minj:maxj], color=:red, lw=4)
