@@ -27,27 +27,11 @@ const PATH = "/home/stransky/results/"
 gr()
 default(size=(1920,1080))
 
-function InitialState(rabii)
-    _, vs = eigenstates(rabii, 2)    
-    a, b = ProjectParity(rabii, vs[1], vs[2])
-    gs1 = (a + b) / sqrt(2)
-    gs2 = (a - b) / sqrt(2)
-
-    q1 = ExpectationValue("E", X(rabii), gs1, rabii)
-    q2 = ExpectationValue("E", X(rabii), gs2, rabii)
-
-    if q1 < 0
-        return gs1
-    end
-
-    return gs2
-end
-
 """ Evolution of the partial trace and related quantities """
 function PartialTraceEvolution(rabii; λf=0.5, mint=0.0, maxt=50, numt=1000, log=false)
     # Initial and final systems
     rabif = Copy(rabii; λ=λf)
-    gs = InitialState(rabii)
+    gs = SingleWellState(rabii)
 
     spin = Array{Float64}(undef, numt, 4)
     ptt = Array{Float64}(undef, numt, 4)
@@ -143,7 +127,7 @@ function StrengthFunction(rabii; λf=0.5, mint=0.0, maxt=50, numt=1000, log=fals
 
     # Initial and final systems
     rabif = Copy(rabii; λ=λf)
-    gs = InitialState(rabii)
+    gs = SingleWellState(rabii)
 
     # Strength function
     sf = StrengthFunction(rabif, gs)
@@ -209,12 +193,7 @@ function EquationOfMotion!(dx, x, parameters, t)
     q, p = x
     rabi, m = parameters
 
-    s2 = 2 * rabi.λ^2 * (q^2 + rabi.δ^2 * p^2) + 1
-    if s2 < 0                       
-        s2 = 0                      # With isoutofdomain=CheckDomain the calculation shouldn't enter here, but in enters anyway
-        @error("s negative!") 
-    end
-    
+    s2 = 2 * rabi.λ^2 * (q^2 + rabi.δ^2 * p^2) + 1    
     s = sqrt(s2)
 
     dx[1] = p * (1 + rabi.λ^2 * rabi.δ^2 * m / rabi.j / s)
@@ -223,6 +202,7 @@ end
 
 function ClassicalToWigner(rabif, t, p, λi)
     x0 = [-sqrt(0.5 * (λi^2 - 1 / λi^2)), 0]
+    
     timeInterval = (0.0, t)
     solver = TsitPap8()
     tolerance = 1E-6
@@ -251,7 +231,7 @@ end
 function WignerFunctions(rabii; λf=0.5, wignerMesh=301, range=1.6, maxt=30, numt=31, log=false, firstIndex=1, lastIndex=-1, kwargs...)
     # Initial and final systems
     rabif = Copy(rabii; λ=λf)
-    gs = InitialState(rabii)	
+    gs = SingleWellState(rabii)	
 
     if log
         clim = (-6, 6)
@@ -280,7 +260,7 @@ function PartialTraceEvolutionScaling(rabii; R0=10, numR=6, λi=1.5, mint=0.0, m
 
         # Initial and final systems
         rabif = Copy(rabii; λ=λf)
-        gs = InitialState(rabii)
+        gs = SingleWellState(rabii)
     
         time = @elapsed begin
             u = U(rabif, mint)
