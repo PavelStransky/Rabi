@@ -25,7 +25,7 @@ include("../Rabi.jl")
 const PATH = "/home/stransky/results/"
 
 gr()
-default(size=(1920,1080), dpi=300)
+default(size=(1920,1080))
 
 function InitialState(rabii)
     _, vs = eigenstates(rabii, 2)    
