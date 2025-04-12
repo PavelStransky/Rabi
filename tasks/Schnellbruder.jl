@@ -18,13 +18,8 @@ using LinearAlgebra
 
 include("../Rabi.jl")
 
-# ffmpeg -f lavfi -t 5 -i color=black:s=1080x1080:r=25 -framerate 25 -i "%d.png" -i music.mp3 -filter_complex "[0:v][1:v]concat=n=2:v=1:a=0[outv]" -map "[outv]" -map 2:a -shortest -c:v libx264 -pix_fmt yuv420p -c:a aac out.mp4
-# ffmpeg -framerate 25 -i "%03d.png" -c:v libx264 -pix_fmt yuv420p out.mp4
-# ffmpeg -f lavfi -t 5 -i color=black:s=1920x1080:r=25 -framerate 25 -i "%d.png" -i music.mp3 -filter_complex "[1:v]pad=iw+mod(iw\,2):ih+mod(ih\,2):color=black[img]; [0:v][img]concat=n=2:v=1:a=0[outv]" -map "[outv]" -map 2:a -shortest -c:v libx264 -pix_fmt yuv420p -c:a aac out.mp4
-# ffmpeg -f lavfi -t 6 -i color=black:s=1920x1080:r=16 -framerate 16 -i "%d.png" -i music.mp3 -filter_complex "[1:v]scale=iw*min(1920/iw\,1080/ih):ih*min(1920/iw\,1080/ih),pad=1920:1080:(1920-iw*min(1920/iw\,1080/ih))/2:(1080-ih*min(1920/iw\,1080/ih))/2:color=black,fade=t=in:st=0:d=1[img]; [0:v][img]concat=n=2:v=1:a=0[outv]" -map "[outv]" -map 2:a -c:v libx264 -pix_fmt yuv420p -c:a aac out.mp4
-
-#ffmpeg -f lavfi -t 2 -i color=black:s=1920x1080:r=16 -framerate 16 -i "%d.png" -i music.mp3 -filter_complex "[1:v]scale=iw*min(1920/iw\,1080/ih):ih*min(1920/iw\,1080/ih),pad=1920:1080:(1920-iw*min(1920/iw\,1080/ih))/2:(1080-ih*min(1920/iw\,1080/ih))/2:color=black,fade=t=in:st=0:d=2[img]; [0:v][img]concat=n=2:v=1:a=0[outv]" -map "[outv]" -map 2:a -c:v libx264 -pix_fmt yuv420p -c:a aac out.mp4
-
+# Bez audia:
+# ffmpeg -f lavfi -t 1 -i color=black:s=1920x1080:r=30 -framerate 30 -i "%d.png" -filter_complex "[1:v]scale=iw*min(1920/iw\,1080/ih):ih*min(1920/iw\,1080/ih),pad=1920:1080:(1920-iw*min(1920/iw\,1080/ih))/2:(1080-ih*min(1920/iw\,1080/ih))/2:color=black,fade=t=in:st=0:d=1[img]; [0:v][img]concat=n=2:v=1:a=0[outv]" -map "[outv]" -preset slow -crf 18 -c:v libx264 -pix_fmt yuv420p -profile:v high out.mp4
 
 # const PATH = "d:/results/rabi/schnellbruder/"
 const PATH = "/home/stransky/results/"

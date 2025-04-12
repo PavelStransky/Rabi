@@ -146,6 +146,23 @@ function ProjectParity(rabi::Rabi, vector1::Ket, vector2::Ket)
 
 end
 
+" A parity-violating state for a backward quench "
+function SingleWellState(rabi::Rabi; left=true)
+    _, vs = eigenstates(rabi, 2) 
+    a, b = ProjectParity(rabi, vs[1], vs[2])
+
+    gs1 = (a + b) / sqrt(2)
+    gs2 = (a - b) / sqrt(2)
+
+    q1 = ExpectationValue("E", X(rabi), gs1, rabi)
+
+    if q1 < 0 && left
+        return gs1
+    end
+
+    return gs2
+end
+
 function PlotΨ(rabi::Rabi, Ψ)
     result = Matrix{Float64}(undef, 2, rabi.N + 1)
     m = zeros(rabi.N + 1)

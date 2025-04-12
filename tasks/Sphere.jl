@@ -10,41 +10,23 @@ const PATH = "d:/results/rabi/schnellbruder/"
 gr()
 default(size=(1200,1200), dpi=300)
 
-function InitialState(rabii)
-    _, vs = eigenstates(rabii, 2)    
-    a, b = ProjectParity(rabii, vs[1], vs[2])
-    gs1 = (a + b) / sqrt(2)
-    gs2 = (a - b) / sqrt(2)
-
-    q1 = ExpectationValue("E", X(rabii), gs1, rabii)
-    q2 = ExpectationValue("E", X(rabii), gs2, rabii)
-
-    if q1 < 0
-        return gs1
-    end
-
-    return gs2
-end
 
 function EquationOfMotion!(dx, x, parameters, t)
     q, p = x
     rabi, m = parameters
 
-    s2 = 2 * rabi.λ^2 * (q^2 + rabi.δ^2 * p^2) + 1
-    if s2 < 0                       
-        s2 = 0                      # With isoutofdomain=CheckDomain the calculation shouldn't enter here, but in enters anyway
-        @error("s negative!") 
-    end
-    
+    s2 = 2 * rabi.λ^2 * (q^2 + rabi.δ^2 * p^2) + 1   
     s = sqrt(s2)
 
     dx[1] = p * (1 + rabi.λ^2 * rabi.δ^2 * m / rabi.j / s)
     dx[2] = -q * (1 + rabi.λ^2 * m / rabi.j / s)
 end
 
-function Trajectory(rabif, t, λi)
+function Trajectory(rabif, λi, max_time, num_time)
+    # Initial state
     x0 = [-sqrt(0.5 * (λi^2 - 1 / λi^2)), 0]
-    timeInterval = (0.0, t)
+
+    timeInterval = (0.0, max_time)
     solver = TsitPap8()
     tolerance = 1E-6
     fnc = ODEFunction(EquationOfMotion!)
@@ -54,8 +36,8 @@ function Trajectory(rabif, t, λi)
     for m = -rabif.j:rabif.j
         problem = ODEProblem(fnc, x0, timeInterval, (rabif, m))
 
-        saveat = collect(range(0, t, step=0.1))
-        time = @elapsed solution = solve(problem, solver, reltol=tolerance, abstol=tolerance, verbose=true, saveat=saveat)
+        saveat = collect(range(0, max_time, step=max_time / num_time))
+        solution = solve(problem, solver, reltol=tolerance, abstol=tolerance, verbose=true, saveat=saveat)
 
         if length(result) == 0
             push!(result, solution.t)
@@ -92,6 +74,7 @@ function VisibilityOnSphere(point)
     return distance_to_point < d_camera_to_sphere
 end
 
+
 function PlotAxis(p)
     p = plot!(p, [0, 0], [0, 0], [1, 1.5], color=:black, lw=4)
     p = scatter!(p, [0], [0], [1], markersize=10, color=:black)
@@ -104,6 +87,7 @@ function PlotAxis(p)
     p = plot!(p, [0, 0], [0, 0], [-1.15, -1.05], color=:black, alpha=0.3, lw=4)
     p = plot!(p, [0, 0], [0, 0], [-1.5, -1.15], color=:black, lw=4)
 end
+
 
 function PlotSphere()
     θ = range(0, stop=π, length=100)
@@ -121,7 +105,8 @@ function PlotSphere()
     return p
 end
 
-function PlotLine(p, xs, ys, zs; color=:red, lw=2)
+" Determines whether the line is visible on the sphere or not"
+function PlotLine(p, xs, ys, zs; color=:red, lw=2, alpha_front=0.7, alpha_back=0.2)
     visible = VisibilityOnSphere([xs[1], ys[1], zs[1]])
 
     lx = []
@@ -136,7 +121,7 @@ function PlotLine(p, xs, ys, zs; color=:red, lw=2)
         push!(lz, z)
 
         if v != visible
-            p = plot!(p, lx, ly, lz, color=color, alpha=if visible 1.0 else 0.3 end, lw=lw)
+            p = plot!(p, lx, ly, lz, color=color, alpha=visible ? alpha_front : alpha_back, lw=lw)
             
             visible = v
             lx = [x]
@@ -145,58 +130,31 @@ function PlotLine(p, xs, ys, zs; color=:red, lw=2)
         end
     end
 
-    p = plot!(p, lx, ly, lz, color=color, alpha=if visible 1.0 else 0.3 end, lw=lw)
-    p = scatter!(p, [lx[end]], [ly[end]], [lz[end]], markersize=10, color=color, alpha=if visible 1.0 else 0.3 end)
+    p = plot!(p, lx, ly, lz, color=color, alpha=visible ? alpha_front : alpha_back, lw=lw)
+    p = scatter!(p, [lx[end]], [ly[end]], [lz[end]], markersize=10, color=color, alpha=visible ? 1.0 : 0.5)
 
     return p
 end
 
-function pokus(rabif, t, p, λi)
-    x = []
-    y = []
-    z = []
-
-    for ph = range(0, stop=2π, length=50)
-        # Define a point on the sphere (example: north pole)
-        th = 0.7
-        px, py, pz = sin(th) * cos(ph), sin(th) * sin(ph), cos(th)
-
-        push!(x, px)
-        push!(y, py)
-        push!(z, pz)
-    end
-
-    pa = PlotSphere()
-    pa = PlotAxis(pa)
-    pa = PlotLine(pa, x, y, z, color=:red, lw=4)
-    # pa = plot(pa, margin=-5mm)
-
-    p = plot(p, pa, layout=grid(2, 1, heights=[0.3,0.7]))
-
-    return p
-end
-
-function pokus()
-    λf = -0.37
-    rabii = Rabi(R=50, λ=1.5, δ=0.5, j=2//2)
+function SphereAnimation(rabii::Rabi; λf=-0.37, max_time=300, num_time::Int=6000, show_time::Int=5, ev_coef=20)	
     rabif = Copy(rabii, λ=λf)
+    gs = SingleWellState(rabii)
 
-    trajectory = Trajectory(rabif, 300, rabii.λ)
+    trajectory = Trajectory(rabif, rabii.λ, max_time, num_time)
 
-    gs = InitialState(rabii)
-
-    ev = ExpectationValues(rabif, [:Jx=>Jx(rabif), :Jy=>Jy(rabif), :Jz=>Jz(rabif), :p=>P(rabif), :x=>X(rabif)], Ψ0=gs, mint=0.0, maxt=200.0, numt = 120001, saveGraph=false, saveData=false, asymptotics=false)
-    jx = ev[1, :]
-    jy = ev[2, :]
-    jz = ev[3, :]
+    ev = ExpectationValues(rabif, [:Jx=>Jx(rabif), :Jy=>Jy(rabif), :Jz=>Jz(rabif), :p=>P(rabif), :x=>X(rabif)], Ψ0=gs, mint=0.0, maxt=max_time, numt = ev_coef * num_time, saveGraph=false, saveData=false, asymptotics=false)
+    jx = -ev[1, :] ./ rabif.j
+    jy = -ev[2, :] ./ rabif.j
+    jz = -ev[3, :] ./ rabif.j
 
     p = ev[4, :]
     q = ev[5, :]
 
     x = sqrt(8) * rabif.λ * q
-    y = sqrt(8) * rabif.λ * rabif.δ * p
+    y = -sqrt(8) * rabif.λ * rabif.δ * p
     z = 1 / Int(2 * rabif.j)
 
+    " Normalization "
     n = sqrt.(x .* x .+ y .* y .+ z .* z)
     x0 = x ./ n
     y0 = y ./ n
@@ -207,22 +165,29 @@ function pokus()
     # jy = jy ./ n
     # jz = jz ./ n
 
-    for j = 1:6001
-        pa = PlotSphere()
-        pa = PlotAxis(pa)
+    colours = palette(:auto)
+    num_visible_frames = Int(show_time * num_time / max_time)
 
-        colours = palette(:auto)
-        colourIndex = 3
+    for j = 1:num_time
+        pa = PlotSphere()
     
-        minj = max(j - 100, 1)
+        maxj = ev_coef * (j - 1) + 1
+        minj = max(maxj - ev_coef * num_visible_frames, 1)
+        
+        pa = PlotLine(pa, jx[minj:maxj], jy[minj:maxj], jz[minj:maxj], color=:black, lw=1)
+        pa = PlotLine(pa, x0[minj:maxj], y0[minj:maxj], z0[minj:maxj], color=:red, lw=4)
+
+        minj = max(j - num_visible_frames, 1)
         maxj = j
+
+        colourIndex = 3
 
         for i = 1:Int(2 * rabii.j + 1)
             q = trajectory[2*i][minj:maxj]
             p = trajectory[2*i + 1][minj:maxj]
 
             x = sqrt(8) * λf * q
-            y = sqrt(8) * λf * rabif.δ * p
+            y = -sqrt(8) * λf * rabif.δ * p
             z = 1 / Int(2 * rabii.j)
 
             n = sqrt.(x .* x .+ y .* y .+ z .* z)
@@ -230,21 +195,17 @@ function pokus()
             y = y ./ n
             z = z ./ n
 
-            pa = PlotLine(pa, x, y, z, color=colours[colourIndex], lw=4)
+            pa = PlotLine(pa, x, y, z, color=colours[colourIndex], lw=3)
             colourIndex += 1
         end
 
-        maxj = 50 * (j - 1) + 1
-        minj = max(maxj - 10000, 1)
 
-        pa = PlotLine(pa, jx[minj:maxj], jy[minj:maxj], jz[minj:maxj], color=:black, lw=1)
-        pa = PlotLine(pa, x0[minj:maxj], y0[minj:maxj], z0[minj:maxj], color=:red, lw=4)
-
-        display(pa)
+        pa = PlotAxis(pa)
+        # display(pa)
 
         savefig(pa, PATH * "sphere_$j.png")
     end
 
 end
 
-pokus()
+SphereAnimation(Rabi(R=50, λ=1.5, δ=0.5, j=4//2))
