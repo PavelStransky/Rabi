@@ -8,7 +8,7 @@ const PATH = "d:/results/rabi/schnellbruder/"
 # const PATH = "/home/stransky/results/"
 
 gr()
-default(size=(1200,1200), dpi=300)
+default(size=(1000,1000))
 
 
 function EquationOfMotion!(dx, x, parameters, t)
@@ -208,4 +208,4 @@ function SphereAnimation(rabii::Rabi; λf=-0.37, max_time=300, num_time::Int=600
 
 end
 
-SphereAnimation(Rabi(R=50, λ=1.5, δ=0.5, j=4//2))
+SphereAnimation(Rabi(R=50, λ=1.5, δ=0.5, j=1//2); λf=-1.5)
