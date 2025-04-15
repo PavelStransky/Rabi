@@ -239,7 +239,8 @@ function WignerFunctions(rabii; λf=0.5, wignerMesh=301, range=1.6, maxt=30, num
         clim = (-0.08, 0.08)
     end
 
-    Wigner(rabif; Ψ0=gs, operators=[:Jx=>Jx(rabif), :q=>X(rabif), :Jy=>Jy(rabif), :p=>P(rabif), :Jz=>Jz(rabif), :P=>projector(gs)], operatorsColor=[:gray, :red, :gray, :red, :gray, :blue], operatorsLayout=(7, 2), firstIndex=firstIndex, lastIndex=lastIndex,
+    Wigner(rabif; Ψ0=gs, operators=[:Jx=>Jx(rabif), :q=>X(rabif), :Jy=>Jy(rabif), :p=>P(rabif), :Jz=>Jz(rabif), :P=>projector(gs)], operatorsColor=[:gray, :red, :gray, :red, :gray, :blue], operatorsMarker=[:diamond, :square, :diamond, :squere, :diamond, :pentagon],
+    operatorsLayout=(7, 2), firstIndex=firstIndex, lastIndex=lastIndex,
     maxt=maxt, numt=numt, xs=LinRange(-range, range, wignerMesh), ys=LinRange(-range, range, wignerMesh), 
     clim=clim, saveData=false, saveGraph=true, showGraph=true, log=log, postProcess=ClassicalToWigner, postProcessParams=rabii.λ, kwargs...)
 end

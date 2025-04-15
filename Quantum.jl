@@ -59,7 +59,7 @@ function Overlap(vectors; limit=nothing)
     return result, p
 end
 
-function Wigner(system::QuantumSystem; husimi=false, Ψ0=nothing, maxt=30.0, numt=31, firstIndex=1, lastIndex=-1, operators=[], operatorsColor=nothing, operatorsLayout=nothing, marginals=false, xs=LinRange(-1, 1, 101), ys=nothing, showGraph=true, saveData=true, saveGraph=true, log=false, clim=(-0.2, 0.2), postProcess=nothing, postProcessParams=nothing, kwargs...)
+function Wigner(system::QuantumSystem; husimi=false, Ψ0=nothing, maxt=30.0, numt=31, firstIndex=1, lastIndex=-1, operators=[], operatorsColor=nothing, operatorsMarker=nothing, operatorsLayout=nothing, marginals=false, xs=LinRange(-1, 1, 101), ys=nothing, showGraph=true, saveData=true, saveGraph=true, log=false, clim=(-0.2, 0.2), postProcess=nothing, postProcessParams=nothing, kwargs...)
     """ Wigner function """
 
     # Range in y direction
@@ -70,6 +70,10 @@ function Wigner(system::QuantumSystem; husimi=false, Ψ0=nothing, maxt=30.0, num
 
     if operatorsColor === nothing
         operatorsColor = [:blue for _ in 1:length(operators)]
+    end
+
+    if operatorsMarker === nothing
+        operatorsMarker = [:circle for _ in 1:length(operators)]
     end
 
     factor = round(Int, 400 / numt)
@@ -123,7 +127,7 @@ function Wigner(system::QuantumSystem; husimi=false, Ψ0=nothing, maxt=30.0, num
             pspi = 1
             for (name, opvalue) in opvalues
                 psp[pspi] = plot(tout, opvalue, color=operatorsColor[pspi])
-                psp[pspi] = scatter!(psp[pspi], [tout[pspi]], [opvalue[i]], color=operatorsColor[pspi], markersize=6, markeralpha=0.7, 
+                psp[pspi] = scatter!(psp[pspi], [tout[i]], [opvalue[i]], color=operatorsColor[pspi], m=operatorsMarker[pspi], markersize=6,  markeralpha=0.7, 
                 title=Label(name),
                 legend=false)
                 # psp[pspi] = annotate!(psp[pspi], 100, -1, text("t", :black, 10))
