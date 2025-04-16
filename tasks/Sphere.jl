@@ -106,7 +106,7 @@ function PlotSphere()
 end
 
 " Determines whether the line is visible on the sphere or not"
-function PlotLine(p, xs, ys, zs; color=:red, lw=2, alpha_front=0.7, alpha_back=0.2)
+function PlotLine(p, xs, ys, zs; color=:red, lw=2, alpha_front=0.7, alpha_back=0.2, marker=:circle)
     visible = VisibilityOnSphere([xs[1], ys[1], zs[1]])
 
     lx = []
@@ -131,7 +131,7 @@ function PlotLine(p, xs, ys, zs; color=:red, lw=2, alpha_front=0.7, alpha_back=0
     end
 
     p = plot!(p, lx, ly, lz, color=color, alpha=visible ? alpha_front : alpha_back, lw=lw)
-    p = scatter!(p, [lx[end]], [ly[end]], [lz[end]], markersize=10, color=color, alpha=visible ? 1.0 : 0.5)
+    p = scatter!(p, [lx[end]], [ly[end]], [lz[end]], markersize=10, m=marker, color=color, alpha=visible ? 1.0 : 0.5)
 
     return p
 end
@@ -143,9 +143,9 @@ function SphereAnimation(rabii::Rabi; λf=-0.37, max_time=300, num_time::Int=600
     trajectory = Trajectory(rabif, rabii.λ, max_time, num_time)
 
     ev = ExpectationValues(rabif, [:Jx=>Jx(rabif), :Jy=>Jy(rabif), :Jz=>Jz(rabif), :p=>P(rabif), :x=>X(rabif)], Ψ0=gs, mint=0.0, maxt=max_time, numt = ev_coef * num_time, saveGraph=false, saveData=false, asymptotics=false)
-    jx = -ev[1, :] ./ rabif.j
-    jy = -ev[2, :] ./ rabif.j
-    jz = -ev[3, :] ./ rabif.j
+    jx = ev[1, :] ./ rabif.j
+    jy = ev[2, :] ./ rabif.j
+    jz = ev[3, :] ./ rabif.j
 
     p = ev[4, :]
     q = ev[5, :]
@@ -174,8 +174,8 @@ function SphereAnimation(rabii::Rabi; λf=-0.37, max_time=300, num_time::Int=600
         maxj = ev_coef * (j - 1) + 1
         minj = max(maxj - ev_coef * num_visible_frames, 1)
         
-        pa = PlotLine(pa, jx[minj:maxj], jy[minj:maxj], jz[minj:maxj], color=:black, lw=1)
-        pa = PlotLine(pa, x0[minj:maxj], y0[minj:maxj], z0[minj:maxj], color=:red, lw=4)
+        pa = PlotLine(pa, jx[minj:maxj], jy[minj:maxj], jz[minj:maxj], color=:black, lw=1, marker=:diamond)
+        pa = PlotLine(pa, x0[minj:maxj], y0[minj:maxj], z0[minj:maxj], color=:red, lw=4, marker=:square)
 
         minj = max(j - num_visible_frames, 1)
         maxj = j
