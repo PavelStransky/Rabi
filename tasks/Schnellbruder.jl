@@ -205,7 +205,7 @@ function ClassicalToWigner(rabif, t, p, λi)
     
     timeInterval = (0.0, t)
     solver = TsitPap8()
-    tolerance = 1E-6
+    tolerance = 1E-8
     fnc = ODEFunction(EquationOfMotion!)
 
     colours = palette(:auto)
