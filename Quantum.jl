@@ -127,7 +127,7 @@ function Wigner(system::QuantumSystem; husimi=false, Ψ0=nothing, maxt=30.0, num
             pspi = 1
             for (name, opvalue) in opvalues
                 psp[pspi] = plot(tout, opvalue, color=operatorsColor[pspi])
-                psp[pspi] = scatter!(psp[pspi], [tout[i]], [opvalue[i]], color=operatorsColor[pspi], m=operatorsMarker[pspi], markersize=6,  markeralpha=0.7, 
+                psp[pspi] = scatter!(psp[pspi], [tout[i]], [opvalue[i]], color=operatorsColor[pspi], m=operatorsMarker[pspi], markersize=7,  markeralpha=0.7, 
                 title=Label(name),
                 legend=false)
                 # psp[pspi] = annotate!(psp[pspi], 100, -1, text("t", :black, 10))
