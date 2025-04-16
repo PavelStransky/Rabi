@@ -138,9 +138,13 @@ function Wigner(system::QuantumSystem; husimi=false, Ψ0=nothing, maxt=30.0, num
 
             if marginals
                 marginal_x = vec(sum(w, dims=2))
+                marginal_x[isnan.(marginal_x)] .= 0.0
                 marginal_x = marginal_x / (sum(marginal_x) * (xs[2] - xs[1]))
+
                 marginal_y = vec(sum(w, dims=1))
+                marginal_y[isnan.(marginal_y)] .= 0.0
                 marginal_y = marginal_y / (sum(marginal_y) * (ys[2] - ys[1]))
+
                 p = plot!(p, xs, (marginal_x * (ys[end] - ys[1]) / 25) .+ ys[1], legend=false)
                 p = plot!(p, xs[end] .- (marginal_y * (xs[end] - xs[1]) / 25), ys)
                 saveData && Export("$(PATH)$(title)_$(system)_$(i)_$(tstr)_marginal_x", xs, marginal_x)
