@@ -362,12 +362,44 @@ if length(ARGS) > 0
     λf = -0.37
     rabi = Rabi(R=50, λ=1.5, δ=0.5, j=2//2)
 
+    maxt = 300
+    numt = 6000
+
     if type == 1
         rabi = Rabi(R=50, λ=1.5, δ=0.0, j=2//2)
     elseif type == 2
         rabi = Rabi(R=50, λ=1.5, δ=0.5, j=4//2)
     elseif type == 3
         rabi = Rabi(R=50, λ=1.5, δ=0.0, j=4//2)
+    elseif type == 4
+        λf = -1.5
+        maxt = 120
+        numt = 6000
+        rabi = Rabi(R=50, λ=1.5, δ=0.5, j=1//2)
+    elseif type == 5
+        λf = -1.0
+        maxt = 120
+        numt = 6000
+        rabi = Rabi(R=50, λ=1.5, δ=0.5, j=1//2)
+    elseif type == 6
+        λf = 0.5
+        maxt = 120
+        numt = 6000
+        rabi = Rabi(R=50, λ=1.5, δ=0.5, j=1//2)
+    elseif type == 7
+        λf = -sqrt(209) / 12
+        maxt = 120
+        numt = 6000
+        rabi = Rabi(R=50, λ=1.5, δ=0.5, j=1//2)
+    elseif type == 8
+        maxt = 120
+        numt = 6000
+        rabi = Rabi(R=50, λ=1.5, δ=0.5, j=1//2)
+    elseif type == 9
+        λf = -2
+        maxt = 120
+        numt = 6000
+        rabi = Rabi(R=50, λ=1.5, δ=0.5, j=1//2)
     elseif type == 10
         λf = -1.5
         rabi = Rabi(R=50, λ=1.5, δ=0.5, j=1//2)
@@ -377,9 +409,18 @@ if length(ARGS) > 0
     elseif type == 12
         λf = 0.5
         rabi = Rabi(R=50, λ=1.5, δ=0.5, j=1//2)
+    elseif type == 13
+        λf = -1.5
+        rabi = Rabi(R=50, λ=1.5, j=1//2)
+    elseif type == 14
+        λf = -1.0
+        rabi = Rabi(R=50, λ=1.5, j=1//2)
+    elseif type == 15
+        λf = 0.5
+        rabi = Rabi(R=50, λ=1.5, j=1//2)
     end
 
-    WignerFunctions(rabi, λf=λf, range=1.5, wignerMesh=501, maxt=300, numt=6000, showGraph=false, firstIndex=firstIndex, lastIndex=lastIndex, marginals=true)
+    WignerFunctions(rabi, λf=λf, range=1.5, wignerMesh=501, maxt=maxt, numt=numt, showGraph=false, firstIndex=firstIndex, lastIndex=lastIndex, marginals=true)
 
     exit()
 end
