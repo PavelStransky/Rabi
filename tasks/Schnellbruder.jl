@@ -228,7 +228,7 @@ function ClassicalToWigner(rabif, t, p, λi)
     return p
 end
 
-function WignerFunctions(rabii; λf=0.5, wignerMesh=301, range=1.6, maxt=30, numt=31, log=false, firstIndex=1, lastIndex=-1, kwargs...)
+function WignerFunctions(rabii; λf=0.5, wignerMesh=301, limits=1.6, maxt=30, numt=31, log=false, firstIndex=1, lastIndex=-1, kwargs...)
     # Initial and final systems
     rabif = Copy(rabii; λ=λf)
     gs = SingleWellState(rabii)	
@@ -241,7 +241,7 @@ function WignerFunctions(rabii; λf=0.5, wignerMesh=301, range=1.6, maxt=30, num
 
     Wigner(rabif; Ψ0=gs, operators=[:Jx=>Jx(rabif), :q=>X(rabif), :Jy=>Jy(rabif), :p=>P(rabif), :Jz=>Jz(rabif), :P=>projector(gs)], operatorsColor=[:gray, :red, :gray, :red, :gray, :blue], operatorsMarker=[:diamond, :square, :diamond, :square, :diamond, :pentagon],
     operatorsLayout=(7, 2), firstIndex=firstIndex, lastIndex=lastIndex,
-    maxt=maxt, numt=numt, xs=LinRange(-range, range, wignerMesh), ys=LinRange(-range, range, wignerMesh), 
+    maxt=maxt, numt=numt, xs=LinRange(-limits, limits, wignerMesh), ys=LinRange(-limits, limits, wignerMesh), 
     clim=clim, saveData=false, saveGraph=true, showGraph=true, log=log, postProcess=ClassicalToWigner, postProcessParams=rabii.λ, kwargs...)
 end
 
@@ -364,6 +364,7 @@ if length(ARGS) > 0
 
     maxt = 300
     numt = 6000
+    limits = 1.5
 
     if type == 1
         rabi = Rabi(R=50, λ=1.5, δ=0.0, j=2//2)
@@ -396,8 +397,9 @@ if length(ARGS) > 0
         numt = 6000
         rabi = Rabi(R=50, λ=1.5, δ=0.5, j=1//2)
     elseif type == 9
-        λf = -2
-        maxt = 120
+        λf = -2.0
+        limits = 2.0
+        maxt = 60
         numt = 6000
         rabi = Rabi(R=50, λ=1.5, δ=0.5, j=1//2)
     elseif type == 10
@@ -420,7 +422,7 @@ if length(ARGS) > 0
         rabi = Rabi(R=50, λ=1.5, j=1//2)
     end
 
-    WignerFunctions(rabi, λf=λf, range=1.5, wignerMesh=501, maxt=maxt, numt=numt, showGraph=false, firstIndex=firstIndex, lastIndex=lastIndex, marginals=true)
+    WignerFunctions(rabi, λf=λf, limits=limits, wignerMesh=501, maxt=maxt, numt=numt, showGraph=false, firstIndex=firstIndex, lastIndex=lastIndex, marginals=true)
 
     exit()
 end
