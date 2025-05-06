@@ -3,7 +3,7 @@ import os
 fnames = []
 energies = []
 
-dir = 'D:/results/Rabi/schnellbruder/5 brothers'
+dir = 'D:/results/Rabi/schnellbruder/2 brothers detail lf=-2.0'
 
 for fname in os.listdir(dir):
     start = fname.find("0.5)_")
@@ -24,6 +24,5 @@ print(fnames)
 for i, fname in enumerate(fnames):
     src = f'{dir}/{fname}'
     dst = f'{dir}/brothers_{i+1}.png'
-
     os.rename(src, dst)
 

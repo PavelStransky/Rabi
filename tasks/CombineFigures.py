@@ -2,7 +2,7 @@ import os
 from PIL import Image
 from alive_progress import alive_bar
 
-dir = 'D:/results/Rabi/schnellbruder/3 brothers'
+dir = 'D:/results/Rabi/schnellbruder/2 brothers detail lf=-2.0'
 
 fnamesSphere = []
 indexSphere = []
@@ -48,7 +48,7 @@ with alive_bar(len(fnamesWigner), title='Combining images') as bar:
         imgWigner = Image.open(srcWigner)
         imgSphere = Image.open(srcSphere)
 
-        imgSphere = imgSphere.resize((1000, 1000))
+        # imgSphere = imgSphere.resize((1000, 1000))
         imgSphere = imgSphere.crop((250, 250, 750, 750))
         # imgWigner = imgWigner.resize((1920, 1080))
 
