@@ -9,8 +9,13 @@ using LinearAlgebra
 #       runs jobs.txt at 24 cores using a simple "parallel" scheduler; jobs are "nice" and all results are logged
 
 #     Creating the video:
-#     - ffmpeg -f lavfi -t 3 -i color=black:s=1920x1080:r=30 -framerate 30 -i "%d.png" -i music.mp3 -filter_complex "[1:v]scale=iw*min(1920/iw\,1080/ih):ih*min(1920/iw\,1080/ih),pad=1920:1080:(1920-iw*min(1920/iw\,1080/ih))/2:(1080-ih*min(1920/iw\,1080/ih))/2:color=black,fade=t=in:st=0:d=1[img]; [0:v][img]concat=n=2:v=1:a=0[outv]" -map "[outv]" -map 2:a -preset slow -crf 18 -c:v libx264 -pix_fmt yuv420p -c:a aac -profile:v high out.mp4
+#     ffmpeg -f lavfi -t 3 -i color=black:s=1920x1080:r=30 -framerate 30 -i "%d.png" -i music.mp3 -filter_complex "[1:v]scale=iw*min(1920/iw\,1080/ih):ih*min(1920/iw\,1080/ih),pad=1920:1080:(1920-iw*min(1920/iw\,1080/ih))/2:(1080-ih*min(1920/iw\,1080/ih))/2:color=black,fade=t=in:st=0:d=1[img]; [0:v][img]concat=n=2:v=1:a=0[outv]" -map "[outv]" -map 2:a -preset slow -crf 18 -c:v libx264 -pix_fmt yuv420p -c:a aac -profile:v high out.mp4
 
+#     With title (lf=0.5):
+#     ffmpeg -framerate 30 -loop 1 -t 9 -i intro.png -framerate 30 -i "%d.png" -i music.mp3 -filter_complex "[1:v]scale=iw*min(1920/iw\,1080/ih):ih*min(1920/iw\,1080/ih),pad=1920:1080:(1920-iw*min(1920/iw\,1080/ih))/2:(1080-ih*min(1920/iw\,1080/ih))/2:color=black,setsar=1,fade=t=in:st=0:d=1[img]; [0:v]setsar=1[title]; [title][img]concat=n=2:v=1:a=0[outv]" -map "[outv]" -map 2:a -preset slow -crf 18 -c:v libx264 -pix_fmt yuv420p -c:a aac -profile:v high out.mp4
+
+#     Without audio:
+#     ffmpeg -f lavfi -t 1 -i color=black:s=1920x1080:r=30 -framerate 30 -i "%d.png" -filter_complex "[1:v]scale=iw*min(1920/iw\,1080/ih):ih*min(1920/iw\,1080/ih),pad=1920:1080:(1920-iw*min(1920/iw\,1080/ih))/2:(1080-ih*min(1920/iw\,1080/ih))/2:color=black,fade=t=in:st=0:d=1[img]; [0:v][img]concat=n=2:v=1:a=0[outv]" -map "[outv]" -preset slow -crf 18 -c:v libx264 -pix_fmt yuv420p -profile:v high out.mp4
 
 #Suppress strange warnings if using pyplot
 # using PyCall
@@ -18,11 +23,8 @@ using LinearAlgebra
 
 include("../Rabi.jl")
 
-# Bez audia:
-# ffmpeg -f lavfi -t 1 -i color=black:s=1920x1080:r=30 -framerate 30 -i "%d.png" -filter_complex "[1:v]scale=iw*min(1920/iw\,1080/ih):ih*min(1920/iw\,1080/ih),pad=1920:1080:(1920-iw*min(1920/iw\,1080/ih))/2:(1080-ih*min(1920/iw\,1080/ih))/2:color=black,fade=t=in:st=0:d=1[img]; [0:v][img]concat=n=2:v=1:a=0[outv]" -map "[outv]" -preset slow -crf 18 -c:v libx264 -pix_fmt yuv420p -profile:v high out.mp4
-
-# const PATH = "d:/results/rabi/schnellbruder/"
-const PATH = "/home/stransky/results/"
+const PATH = "d:/results/rabi/schnellbruder/"
+# const PATH = "/home/stransky/results/"
 
 gr()
 default(size=(1920,1080))
@@ -344,10 +346,6 @@ end
 
 # _, pld = LevelDynamics(Rabi(R=10,N=300), ps=LinRange(-1.5, 1.5, 401), limit=150, ylims=(-1,2), saveGraph=false)
 
-# rabi = Rabi(R=50, λ=1.5, δ=0.5, j=4//2)
-# x, y = StrengthFunctionMagnitude(rabi; λf_min=-1.0, λf_max=1.0, λf_num=100)
-# Export("$(PATH)sf_$(String(rabi))", x, y)
-
 if length(ARGS) > 0
     firstIndex = 30 * parse(Int, ARGS[1]) + 1
     lastIndex = firstIndex + 29
@@ -384,3 +382,54 @@ if length(ARGS) > 0
     exit()
 end
 
+function Figure1()
+    default(size=(800,600))
+
+    rabi = Rabi(R=50, λ=1.5, δ=0.5, j=1//2)
+    gs = SingleWellState(rabi)
+
+    ef, sf, parity = StrengthFunction(Copy(rabi; λ=-0.3), gs)
+
+    # "Odd" and "even" parity states
+    sfp = Array{Float64}(undef, 0)
+    ep = Array{Float64}(undef, 0)
+    sfn = Array{Float64}(undef, 0)
+    en = Array{Float64}(undef, 0)
+    for (j, p) in enumerate(parity)
+        if p > 0
+            append!(ep, ef[j])
+            append!(sfp, sf[j])
+        else
+            append!(en, ef[j])
+            append!(sfn, sf[j])
+        end
+    end
+
+    p = scatter(ep, sfp, markeralpha=0.9, markerstrokewidth=0, markersize=5, xlims=(0,3), label="Parity +", xlabel="\$e\$", ylabel="\$S\$", title=String(rabi))
+    p = scatter(p, en, sfn, markeralpha=0.9, markerstrokewidth=0, markersize=5, label="Parity -")
+    # p = plot(p, [0, λ], [-0.5, ExpectationValue(H(rabi), Ψ) / rabi.R], linewidth=3, arrow=(:closed, 1.0))
+    display(plot(p))
+    savefig(p, "d:/sf.png")
+    # print(pf)
+
+    # p = scatter(ef, sf, markeralpha=0.5, markerstrokewidth=0, xlabel="\$E\$", ylabel=raw"$\log_{10}S$", label=raw"$|\psi_{\mathrm{GS}}\rangle$")
+    # display(plot(p))
+end
+
+rabi = Rabi(R=50, λ=1.5, δ=0.5, j=1//2)
+x, y = StrengthFunctionMagnitude(rabi; λf_min=-1.2, λf_max=1.2, λf_num=200)
+Export("$(PATH)sf_$(String(rabi))", x, y)
+
+rabi = Rabi(R=50, λ=1.5, δ=0.5, j=2//2)
+x, y = StrengthFunctionMagnitude(rabi; λf_min=-1.2, λf_max=1.2, λf_num=200)
+Export("$(PATH)sf_$(String(rabi))", x, y)
+
+rabi = Rabi(R=50, λ=1.5, δ=0.5, j=4//2)
+x, y = StrengthFunctionMagnitude(rabi; λf_min=-1.2, λf_max=1.2, λf_num=200)
+Export("$(PATH)sf_$(String(rabi))", x, y)
+
+# ps = StrengthFunction(rabi; λf=-1.0, showgraph=true, envelope_window=Int(6 * rabi.j + 2))
+
+
+# Strength function
+# Figure1()
