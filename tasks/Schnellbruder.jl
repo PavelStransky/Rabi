@@ -106,7 +106,7 @@ function PartialTraceEvolution(rabii; λf=0.5, mint=0.0, maxt=50, numt=1000, log
 end
 
 """ Strength function for the Rabi model and its local extrema """
-function StrengthFunction(rabii; λf=0.5, mint=0.0, maxt=50, numt=1000, log=false, threshold=1E-15, envelope_window=3, showgraph=true)
+function StrengthFunction(rabii; λf=0.5, threshold=1E-15, envelope_window=3, showgraph=true, savedata=false)
     """ Finds all local extrema in the array a """
     function LocalExtremaIndices(a)
         n = length(a)
@@ -183,9 +183,13 @@ function StrengthFunction(rabii; λf=0.5, mint=0.0, maxt=50, numt=1000, log=fals
     println("Peak check: ", sum(sum_peaks))
 
     if showgraph
-        p = scatter(sf[1], log10.(sf[2]),  ylims=(-20, 0), xlims=(0,3), title="$(k)", markeralpha=0.5, markerstrokewidth=0, xlabel="\$E\$", ylabel=raw"$\log_{10}S$", label=raw"$|\psi_{\mathrm{GS}}\rangle$")
+        p = scatter(sf[1], log10.(sf[2]),  ylims=(log10(threshold) - 5, 0), xlims=(0,3), title="$(k)", markeralpha=0.5, markerstrokewidth=0, xlabel="\$E\$", ylabel=raw"$\log_{10}S$", label=raw"$|\psi_{\mathrm{GS}}\rangle$")
         p = scatter!(p, envelopex, log10.(envelopey), color=:red, markerstrokewidth=0)
         display(plot(p))
+    end
+    if savedata
+        Export("$(PATH)sf_$(String(rabii))_$(λf)", sf[1], sf[2])
+        Export("$(PATH)sf_$(String(rabii))_$(λf)_envelope", envelopex, envelopey)
     end
 
     return sum_peaks
@@ -418,6 +422,16 @@ if length(ARGS) > 0
     elseif type == 15
         λf = 0.5
         rabi = Rabi(R=50, λ=1.5, j=1//2)
+    elseif type == 20
+        λf = -0.62116
+        maxt = 120
+        numt = 6000
+        rabi = Rabi(R=50, λ=1.5, δ=0.5, j=1//2)
+    elseif type == 21
+        λf = 0.62116
+        maxt = 120
+        numt = 6000
+        rabi = Rabi(R=50, λ=1.5, δ=0.5, j=1//2)
     end
 
     WignerFunctions(rabi, λf=λf, limits=limits, wignerMesh=501, maxt=maxt, numt=numt, showGraph=false, firstIndex=firstIndex, lastIndex=lastIndex, marginals=true)
@@ -459,20 +473,33 @@ function Figure1()
     # display(plot(p))
 end
 
-rabi = Rabi(R=50, λ=1.5, δ=0.5, j=1//2)
-x, y = StrengthFunctionMagnitude(rabi; λf_min=-1.2, λf_max=1.2, λf_num=200)
-Export("$(PATH)sf_$(String(rabi))", x, y)
+# rabi = Rabi(R=50, λ=1.5, δ=0.5, j=1//2)
+# x, y = StrengthFunctionMagnitude(rabi; λf_min=-1.2, λf_max=1.2, λf_num=200)
+# Export("$(PATH)sf_$(String(rabi))", x, y)
 
-rabi = Rabi(R=50, λ=1.5, δ=0.5, j=2//2)
-x, y = StrengthFunctionMagnitude(rabi; λf_min=-1.2, λf_max=1.2, λf_num=200)
-Export("$(PATH)sf_$(String(rabi))", x, y)
+# rabi = Rabi(R=50, λ=1.5, δ=0.5, j=2//2)
+# x, y = StrengthFunctionMagnitude(rabi; λf_min=-1.2, λf_max=1.2, λf_num=200)
+# Export("$(PATH)sf_$(String(rabi))", x, y)
 
-rabi = Rabi(R=50, λ=1.5, δ=0.5, j=4//2)
-x, y = StrengthFunctionMagnitude(rabi; λf_min=-1.2, λf_max=1.2, λf_num=200)
-Export("$(PATH)sf_$(String(rabi))", x, y)
+# rabi = Rabi(R=50, λ=1.5, δ=0.5, j=4//2)
+# x, y = StrengthFunctionMagnitude(rabi; λf_min=-1.2, λf_max=1.2, λf_num=200)
+# Export("$(PATH)sf_$(String(rabi))", x, y)
 
 # ps = StrengthFunction(rabi; λf=-1.0, showgraph=true, envelope_window=Int(6 * rabi.j + 2))
 
 
 # Strength function
 # Figure1()
+rabi = Rabi(R=50, λ=1.5, δ=0.5, j=1//2)
+StrengthFunction(rabi; λf=1.20474, showgraph=true, savedata=true, envelope_window=Int(6 * rabi.j + 2), threshold=1E-10)
+StrengthFunction(rabi; λf=0.5, showgraph=true, savedata=true, envelope_window=Int(6 * rabi.j + 2), threshold=1E-10)
+StrengthFunction(rabi; λf=0.0, showgraph=true, savedata=true, envelope_window=Int(6 * rabi.j + 2), threshold=1E-10)
+StrengthFunction(rabi; λf=-0.369, showgraph=true, savedata=true, envelope_window=Int(6 * rabi.j + 2), threshold=1E-10)
+StrengthFunction(rabi; λf=-1.20474, showgraph=true, savedata=true, envelope_window=Int(6 * rabi.j + 2), threshold=1E-10)
+
+rabi = Rabi(R=50, λ=1.5, δ=0.5, j=4//2)
+StrengthFunction(rabi; λf=-0.92678, showgraph=true, savedata=true, envelope_window=Int(6 * rabi.j + 2), threshold=1E-10)
+StrengthFunction(rabi; λf=-0.57987, showgraph=true, savedata=true, envelope_window=Int(6 * rabi.j + 2), threshold=1E-10)
+StrengthFunction(rabi; λf=-0.369, showgraph=true, savedata=true, envelope_window=Int(6 * rabi.j + 2), threshold=1E-10)
+StrengthFunction(rabi; λf=-0.19734, showgraph=true, savedata=true, envelope_window=Int(6 * rabi.j + 2), threshold=1E-10)
+StrengthFunction(rabi; λf=-0.02001, showgraph=true, savedata=true, envelope_window=Int(6 * rabi.j + 2), threshold=1E-10)
