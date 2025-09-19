@@ -208,4 +208,4 @@ function SphereAnimation(rabii::Rabi; λf=-0.37, max_time=300, num_time::Int=600
 
 end
 
-SphereAnimation(Rabi(R=50, λ=1.5, δ=0.5, j=1//2); λf=-2.0, max_time=120)
+SphereAnimation(Rabi(R=20, λ=1.5, δ=0.5, j=4//2); λf=sqrt(2)/5, max_time=600)

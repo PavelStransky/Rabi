@@ -2,7 +2,7 @@ import os
 from PIL import Image
 from alive_progress import alive_bar
 
-dir = 'D:/results/Rabi/schnellbruder/2 brothers detail lf=-2.0'
+dir = 'D:/results/Rabi/schnellbruder/5 brothers lf=-0.2828 R=20'
 
 fnamesSphere = []
 indexSphere = []

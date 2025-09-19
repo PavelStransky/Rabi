@@ -6,7 +6,7 @@ from matplotlib.animation import FuncAnimation, FFMpegWriter
 from qutip import *
 import time
 
-plt.ion()
+# plt.ion()
 class Rabi:
     def __init__(self, N=100, omega=1, R=100, gamma=0, delta=0, mu=0, nu=0, adaptiveN=True):
         self.N = N
@@ -62,7 +62,7 @@ class Rabi:
 
         if gammas is not None:
             xs = gammas
-            ax.set_xlabel(r"$\lambda}$")
+            ax.set_xlabel(r"$\lambda$")
             ax.set_title(f'Level Dynamics for R={self.R}, delta={self.delta}')
     
             for gamma in gammas:
@@ -90,11 +90,9 @@ class Rabi:
             psi = ket("00", [self.N, 2])
             
         # https://qutip.org/docs/latest/guide/dynamics/dynamics-options.html
-        options = Options()
-        options.nsteps = 1000000
-        options.num_cpus = 8
+        options = {"nsteps": 1000000}
 
-        return sesolve(self.Hamiltonian(), psi, times, options=options, e_ops=[operator])
+        return sesolve(self.Hamiltonian(), psi, times, options=options)
 
     def Nt(self, times, psi=None):
         a  = tensor(destroy(self.N), qeye(2))
@@ -106,13 +104,12 @@ class Rabi:
         if psi is None:
             psi = ket("00", [self.N, 2])
 
-rabi = Rabi(R=100, delta=0.5, gamma=1, adaptiveN=True)
-times = np.linspace(0, 100, 101)
-solution = rabi.Nt(times)
+# rabi = Rabi(R=100, delta=0.5, gamma=1, adaptiveN=True)
+# times = np.linspace(0, 100, 101)
+# solution = rabi.Nt(times)
 
-plt.plot(solution.times, solution.expect[0])
-plt.show()
-
+# plt.plot(solution.times, solution.expect[0])
+# plt.show()
 
 #
 # Main calculation
@@ -152,12 +149,14 @@ def Figure2E2():
     rabi.LevelDynamics(gammas=gammas, numEV=300, limits=(-2, 0))
 
 def Wigner():
-    rabi = Rabi(R=100, delta=0.5, gamma=1, adaptiveN=True)
+    plt.ion()
+
+    rabi = Rabi(R=5, delta=0.5, gamma=2, adaptiveN=True)
     times = np.linspace(0, 50, 51)
 
-    w = rabi.Wigner(times)
+    w = rabi.TimeEvolution(times)
 
-    x = np.linspace(-25, 25, 251)
+    x = np.linspace(-2 * np.sqrt(2 * rabi.R), 2 * np.sqrt(2 * rabi.R), 201)
     X,Y = np.meshgrid(x, x)
 
     fig = plt.figure(2, figsize=(9, 6))
@@ -167,13 +166,13 @@ def Wigner():
         rho = ptrace(ket2dm(state), 0)
         W = wigner(rho, x, x)
         plt.clf()
-        plt.contourf(X, Y, W, np.linspace(-0.1, 0.1, 101), cmap=plt.cm.seismic, extend = "both")        
+        plt.contourf(X / np.sqrt(4 * rabi.R), Y / np.sqrt(4 * rabi.R), W, np.linspace(-0.1, 0.1, 101), cmap=plt.cm.seismic, extend = "both")        
         print(t, time.time() - startTime)
-        #plt.colorbar(shrink=0.65, aspect=20)
+        # plt.colorbar(shrink=0.65, aspect=20)
         plt.colorbar()
         plt.title(f"T={t}")
         plt.show()
-        plt.savefig(f"d:\\results\\Wigner\\{t}.png")
+        # plt.savefig(f"d:\\results\\Wigner\\{t}.png")
         plt.pause(1)
 
 def WignerAnimation(gamma, times):
@@ -188,7 +187,7 @@ def WignerAnimation(gamma, times):
 
     def init():
         ax.clear()
-        cf = ax.contourf(X, Y, np.zeros(shape(X)), np.linspace(-0.4, 0.4, 201), cmap=plt.cm.seismic, extend = "both")
+        cf = ax.contourf(X, Y, np.zeros(np.shape(X)), np.linspace(-0.4, 0.4, 201), cmap=plt.cm.seismic, extend = "both")
         fig.colorbar(cf, ax=ax)
 
         return ax,
@@ -223,5 +222,5 @@ for gamma in np.linspace(0.2, 2, 10):
     WignerAnimation(gamma, times)
 """
 Wigner()
-#LD()
+# LD()
 
