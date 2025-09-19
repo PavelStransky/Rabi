@@ -194,3 +194,93 @@ function eigenstates(rabi::Rabi, limit)
     energies, vectors = QuantumOptics.eigenstates(dense(H(rabi)), limit)
     return energies / (2 * rabi.j * rabi.R * rabi.ω), vectors
 end
+
+""" Strength function for the Rabi model and its local extrema """
+function StrengthFunction(rabii::Rabi; λf=0.5, threshold=1E-15, envelope_window=3, showgraph=true, savedata=false)
+    """ Finds all local extrema in the array a """
+    function LocalExtremaIndices(a)
+        n = length(a)
+        extrema_indices = Int[]
+
+        # Include the first...
+        push!(extrema_indices, 1)
+
+        for i in 2:(n-1)
+            if (a[i] > a[i-1] && a[i] > a[i+1]) || (a[i] < a[i-1] && a[i] < a[i+1])
+                push!(extrema_indices, i)
+            end
+        end
+    
+        # ...and the last elements as extrema
+        push!(extrema_indices, n)
+
+        return extrema_indices
+    end    
+
+    # Initial and final systems
+    rabif = Copy(rabii; λ=λf)
+    gs = SingleWellState(rabii)
+
+    # Strength function
+    sf = StrengthFunction(rabif, gs)
+
+    energies = sf[1]
+    probabilities = sf[2]
+
+    indices = findall(p -> p > threshold, probabilities)
+
+    energies = energies[indices]
+    probabilities = probabilities[indices]
+
+    envelopex = copy(energies)
+    envelopey = copy(probabilities)
+
+    for i in 1:length(probabilities)
+        k = argmax(probabilities[max(i - envelope_window, 1):i]) + max(i - envelope_window, 1) - 1
+        envelopex[i] = energies[k]
+        envelopey[i] = probabilities[k]
+    end
+
+        # Find indices of the first occurrences of unique y-values
+    uniquey = unique(envelopey)
+
+    unique_indices = Int[]
+    for y in uniquey
+        push!(unique_indices, findfirst(e -> e == y, envelopey))
+    end
+
+    # Filter x and y arrays based on these indices
+    envelopex = envelopex[unique_indices]
+    envelopey = envelopey[unique_indices]
+
+    extrema_indices = LocalExtremaIndices(envelopey)
+    
+    println("Local extrema indices: ", extrema_indices)
+    println("Local extrema x: ", envelopex[extrema_indices])
+    println("Local extrema y: ", envelopey[extrema_indices])
+
+    sum_peaks = Array{Float64}(undef, Int(2 * rabii.j + 1))
+
+    k = 1
+    for i in 3:length(extrema_indices)
+        if isodd(i)
+            sum_peaks[k] = sum(envelopey[findall(e -> envelopex[extrema_indices[i - 2]] < e < envelopex[extrema_indices[i]], envelopex)])
+            println("Peak $(k): ", sum_peaks[k])
+            k += 1
+        end
+    end
+
+    println("Peak check: ", sum(sum_peaks))
+
+    if showgraph
+        p = scatter(sf[1], log10.(sf[2]),  ylims=(log10(threshold) - 5, 0), xlims=(0,3), title="$(k)", markeralpha=0.5, markerstrokewidth=0, xlabel="\$E\$", ylabel=raw"$\log_{10}S$", label=raw"$|\psi_{\mathrm{GS}}\rangle$")
+        p = scatter!(p, envelopex, log10.(envelopey), color=:red, markerstrokewidth=0)
+        display(plot(p))
+    end
+    if savedata
+        Export("$(PATH)sf_$(String(rabii))_$(λf)", sf[1], sf[2])
+        Export("$(PATH)sf_$(String(rabii))_$(λf)_envelope", envelopex, envelopey)
+    end
+
+    return sum_peaks
+end
