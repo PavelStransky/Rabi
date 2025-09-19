@@ -80,6 +80,8 @@ function Wigner(system::QuantumSystem; husimi=false, Ψ0=nothing, maxt=30.0, num
     if factor < 1 factor = 1 end
     ts = LinRange(0, maxt, numt * factor + 1)
 
+    firstIndex = (firstIndex - 1) * factor + 1
+
     println("Wigner $(system), maxt=$maxt, numt=$numt, factor=$factor, firstIndex=$firstIndex, lastIndex=$lastIndex")
 
     # Schroedinger time evolution
