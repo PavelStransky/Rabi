@@ -105,96 +105,6 @@ function PartialTraceEvolution(rabii; λf=0.5, mint=0.0, maxt=50, numt=1000, log
     savefig(p, "$(PATH)ptt_($(rabif)).png")
 end
 
-""" Strength function for the Rabi model and its local extrema """
-function StrengthFunction(rabii; λf=0.5, threshold=1E-15, envelope_window=3, showgraph=true, savedata=false)
-    """ Finds all local extrema in the array a """
-    function LocalExtremaIndices(a)
-        n = length(a)
-        extrema_indices = Int[]
-
-        # Include the first...
-        push!(extrema_indices, 1)
-
-        for i in 2:(n-1)
-            if (a[i] > a[i-1] && a[i] > a[i+1]) || (a[i] < a[i-1] && a[i] < a[i+1])
-                push!(extrema_indices, i)
-            end
-        end
-    
-        # ...and the last elements as extrema
-        push!(extrema_indices, n)
-
-        return extrema_indices
-    end    
-
-    # Initial and final systems
-    rabif = Copy(rabii; λ=λf)
-    gs = SingleWellState(rabii)
-
-    # Strength function
-    sf = StrengthFunction(rabif, gs)
-
-    energies = sf[1]
-    probabilities = sf[2]
-
-    indices = findall(p -> p > threshold, probabilities)
-
-    energies = energies[indices]
-    probabilities = probabilities[indices]
-
-    envelopex = copy(energies)
-    envelopey = copy(probabilities)
-
-    for i in 1:length(probabilities)
-        k = argmax(probabilities[max(i - envelope_window, 1):i]) + max(i - envelope_window, 1) - 1
-        envelopex[i] = energies[k]
-        envelopey[i] = probabilities[k]
-    end
-
-        # Find indices of the first occurrences of unique y-values
-    uniquey = unique(envelopey)
-
-    unique_indices = Int[]
-    for y in uniquey
-        push!(unique_indices, findfirst(e -> e == y, envelopey))
-    end
-
-    # Filter x and y arrays based on these indices
-    envelopex = envelopex[unique_indices]
-    envelopey = envelopey[unique_indices]
-
-    extrema_indices = LocalExtremaIndices(envelopey)
-    
-    println("Local extrema indices: ", extrema_indices)
-    println("Local extrema x: ", envelopex[extrema_indices])
-    println("Local extrema y: ", envelopey[extrema_indices])
-
-    sum_peaks = Array{Float64}(undef, Int(2 * rabii.j + 1))
-
-    k = 1
-    for i in 3:length(extrema_indices)
-        if isodd(i)
-            sum_peaks[k] = sum(envelopey[findall(e -> envelopex[extrema_indices[i - 2]] < e < envelopex[extrema_indices[i]], envelopex)])
-            println("Peak $(k): ", sum_peaks[k])
-            k += 1
-        end
-    end
-
-    println("Peak check: ", sum(sum_peaks))
-
-    if showgraph
-        p = scatter(sf[1], log10.(sf[2]),  ylims=(log10(threshold) - 5, 0), xlims=(0,3), title="$(k)", markeralpha=0.5, markerstrokewidth=0, xlabel="\$E\$", ylabel=raw"$\log_{10}S$", label=raw"$|\psi_{\mathrm{GS}}\rangle$")
-        p = scatter!(p, envelopex, log10.(envelopey), color=:red, markerstrokewidth=0)
-        display(plot(p))
-    end
-    if savedata
-        Export("$(PATH)sf_$(String(rabii))_$(λf)", sf[1], sf[2])
-        Export("$(PATH)sf_$(String(rabii))_$(λf)_envelope", envelopex, envelopey)
-    end
-
-    return sum_peaks
-end
-
 function EquationOfMotion!(dx, x, parameters, t)
     q, p = x
     rabi, m = parameters
@@ -490,16 +400,31 @@ end
 
 # Strength function
 # Figure1()
-rabi = Rabi(R=50, λ=1.5, δ=0.5, j=1//2)
-StrengthFunction(rabi; λf=1.20474, showgraph=true, savedata=true, envelope_window=Int(6 * rabi.j + 2), threshold=1E-10)
-StrengthFunction(rabi; λf=0.5, showgraph=true, savedata=true, envelope_window=Int(6 * rabi.j + 2), threshold=1E-10)
-StrengthFunction(rabi; λf=0.0, showgraph=true, savedata=true, envelope_window=Int(6 * rabi.j + 2), threshold=1E-10)
-StrengthFunction(rabi; λf=-0.369, showgraph=true, savedata=true, envelope_window=Int(6 * rabi.j + 2), threshold=1E-10)
-StrengthFunction(rabi; λf=-1.20474, showgraph=true, savedata=true, envelope_window=Int(6 * rabi.j + 2), threshold=1E-10)
 
-rabi = Rabi(R=50, λ=1.5, δ=0.5, j=4//2)
-StrengthFunction(rabi; λf=-0.92678, showgraph=true, savedata=true, envelope_window=Int(6 * rabi.j + 2), threshold=1E-10)
-StrengthFunction(rabi; λf=-0.57987, showgraph=true, savedata=true, envelope_window=Int(6 * rabi.j + 2), threshold=1E-10)
-StrengthFunction(rabi; λf=-0.369, showgraph=true, savedata=true, envelope_window=Int(6 * rabi.j + 2), threshold=1E-10)
-StrengthFunction(rabi; λf=-0.19734, showgraph=true, savedata=true, envelope_window=Int(6 * rabi.j + 2), threshold=1E-10)
-StrengthFunction(rabi; λf=-0.02001, showgraph=true, savedata=true, envelope_window=Int(6 * rabi.j + 2), threshold=1E-10)
+# rabi = Rabi(R=50, λ=1.5, δ=0.5, j=1//2)
+# StrengthFunction(rabi; λf=1.20474, showgraph=true, savedata=true, envelope_window=Int(6 * rabi.j + 2), threshold=1E-10)
+# StrengthFunction(rabi; λf=0.5, showgraph=true, savedata=true, envelope_window=Int(6 * rabi.j + 2), threshold=1E-10)
+# StrengthFunction(rabi; λf=0.0, showgraph=true, savedata=true, envelope_window=Int(6 * rabi.j + 2), threshold=1E-10)
+# StrengthFunction(rabi; λf=-0.369, showgraph=true, savedata=true, envelope_window=Int(6 * rabi.j + 2), threshold=1E-10)
+# StrengthFunction(rabi; λf=-1.20474, showgraph=true, savedata=true, envelope_window=Int(6 * rabi.j + 2), threshold=1E-10)
+
+# rabi = Rabi(R=50, λ=1.5, δ=0.5, j=4//2)
+# StrengthFunction(rabi; λf=-0.92678, showgraph=true, savedata=true, envelope_window=Int(6 * rabi.j + 2), threshold=1E-10)
+# StrengthFunction(rabi; λf=-0.57987, showgraph=true, savedata=true, envelope_window=Int(6 * rabi.j + 2), threshold=1E-10)
+# StrengthFunction(rabi; λf=-0.369, showgraph=true, savedata=true, envelope_window=Int(6 * rabi.j + 2), threshold=1E-10)
+# StrengthFunction(rabi; λf=-0.19734, showgraph=true, savedata=true, envelope_window=Int(6 * rabi.j + 2), threshold=1E-10)
+# StrengthFunction(rabi; λf=-0.02001, showgraph=true, savedata=true, envelope_window=Int(6 * rabi.j + 2), threshold=1E-10)
+
+function RabiOscillations()
+    λf = -0.4
+    λi = 1.4
+    rabi = Rabi(R=20, λ=λi, δ=0.5, j=4//2)
+
+    maxt = 200
+    numt = 2
+    limits = 1.5
+
+    WignerFunctions(rabi, λf=λf, limits=limits, wignerMesh=301, maxt=maxt, numt=numt, showGraph=false, marginals=true)
+end
+
+RabiOscillations()
