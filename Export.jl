@@ -55,7 +55,9 @@ end
 " Export of the time series (Origin) "
 function Export(fname, ts, xs, xm)
     open(fname, "w") do f
-        write(f, "-1\t$xm\n")
+        if !isnothing(xm)
+            write(f, "-1\t$xm\n")
+        end
         for (t, x) in zip(ts, xs)
             write(f, "$t\t$x\n")
         end
