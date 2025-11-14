@@ -17,6 +17,8 @@ using LinearAlgebra
 #     Without audio:
 #     ffmpeg -f lavfi -t 1 -i color=black:s=1920x1080:r=30 -framerate 30 -i "%d.png" -filter_complex "[1:v]scale=iw*min(1920/iw\,1080/ih):ih*min(1920/iw\,1080/ih),pad=1920:1080:(1920-iw*min(1920/iw\,1080/ih))/2:(1080-ih*min(1920/iw\,1080/ih))/2:color=black,fade=t=in:st=0:d=1[img]; [0:v][img]concat=n=2:v=1:a=0[outv]" -map "[outv]" -preset slow -crf 18 -c:v libx264 -pix_fmt yuv420p -profile:v high out.mp4
 
+#     ffmpeg -framerate 30 -i "brothers_%d.png" -c:v libx264 -pix_fmt yuv420p out.mp4
+
 #Suppress strange warnings if using pyplot
 # using PyCall
 # pyimport("warnings").filterwarnings("ignore", message=".*No data for colormapping provided.*")
