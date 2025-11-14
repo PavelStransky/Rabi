@@ -6,16 +6,19 @@ const PATH = "d:/results/rabi/Schnellbruder/"
 
 pyplot(size=(1000, 800))
 
+timespan = pi * 2 / 3
+timespan = 3 * pi
+
 R = 20
 λi = 1.5
 λf = -sqrt(2.0) / 5
 # λf = -sqrt(209) / 12
-λf = -1.5
+# λf = -1.5
 
 δ = 0.5
 
 n = 300
-j = 1 // 2
+j = 4 // 2
 
 # Initial and final systems
 rabii = Rabi(N=n, R=R, λ=λi, δ=δ, j=j)
@@ -48,7 +51,7 @@ function Trajectory(rabif, t, λi)
     for m = -rabif.j:rabif.j
         problem = ODEProblem(fnc, x0, timeInterval, (rabif, m))
 
-        saveat = collect(range(max(t - 1, 0), t, step=0.01))
+        saveat = collect(range(max(t - timespan, 0), t, step=0.01))
         time = @elapsed solution = solve(problem, solver, reltol=tolerance, abstol=tolerance, verbose=true, saveat=saveat)
 
         println("m = $m, time = $(time)s, solution = $(length(solution))")
@@ -64,4 +67,4 @@ function Trajectory(rabif, t, λi)
     display(p)
 end
 
-Trajectory(rabif, 4, λi)
+Trajectory(rabif, pi * 8 / 3, λi)
