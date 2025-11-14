@@ -6,7 +6,7 @@ import matplotlib.pyplot as plt
 
 PATH = 'd:/results/Rabi/schnellbruder/'
 
-J2 = 1
+J2 = 4
 OMEGA = 1
 R = 20
 
@@ -16,7 +16,7 @@ DELTA = 0.5
 negativity = []
 purity = []
 
-times = np.linspace(0, 100, 1000, endpoint=False)
+times = np.linspace(0, 400, 4000, endpoint=False)
 
 for time in times:
     try:
@@ -45,7 +45,7 @@ try:
 except Exception as e:
     print(f"Error loading file: {e}")
         
-data = 2 * np.sqrt(datax * datax + datay * datay + dataz * dataz)
+data = np.sqrt(datax * datax + datay * datay + dataz * dataz) / (J2 / 2)
 
 plt.figure(figsize=(15, 10))
 plt.plot(times, negativity, label='Negativity')
