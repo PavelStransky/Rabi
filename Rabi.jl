@@ -78,8 +78,8 @@ Base.show(io::IO, rabi::Rabi) = print(io, String(rabi))
 Nopt(R, λ=0, μ=0, ν=0) = trunc(Int, max(R, R + 3 * R * (λ^2 + 4*μ)))
 Nopt(rabi::Rabi) = Nopt(rabi.R, rabi.λ, rabi.μ)
 
-FockBasis(rabi::Rabi) = QuantumOptics.FockBasis(rabi.N)
-SpinBasis(rabi::Rabi) = QuantumOptics.SpinBasis(rabi.j)
+QuantumOptics.FockBasis(rabi::Rabi) = QuantumOptics.FockBasis(rabi.N)
+QuantumOptics.SpinBasis(rabi::Rabi) = QuantumOptics.SpinBasis(rabi.j)
 
 " Operators "
 A(rabi::Rabi) = tensor(destroy(FockBasis(rabi)), one(SpinBasis(rabi)))
