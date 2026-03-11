@@ -3,7 +3,6 @@ using QuantumOptics
 using Statistics
 using LinearAlgebra
 using Formatting
-using Measures
 
 abstract type QuantumSystem end
 
