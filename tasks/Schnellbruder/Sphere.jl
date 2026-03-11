@@ -121,4 +121,4 @@ function Sphere(rabii::Rabi; λf=-0.37, min_time=0.0, max_time=300.0, num_time::
     savefig(pa, PATH * "sphere_$(min_time).png")
 end
 
-Sphere(Rabi(R=20, λ=1.5, δ=0.5, j=1//2); λf=-sqrt(2)/5, min_time=58.0, max_time=68.0, num_time=5000)
+Sphere(Rabi(R=50, λ=1.5, δ=0.5, j=1//2); λf=-24/65, min_time=0.0, max_time=300.0, num_time=6000)

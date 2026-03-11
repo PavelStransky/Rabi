@@ -1,31 +1,47 @@
 include("../../Rabi.jl")
 
-const PATH = "d:/results/rabi/Schnellbruder/"
+const PATH = "d:/results/rabi/Schnellbruder/negativity/"
 
-R = 20
-λi = 1.5
-λf = -sqrt(2.0) / 5
-# λf = -sqrt(209) / 12
-# λf = -1.5
+function CalculateWigner(rabii, λf; wignerMesh=401, limits=2.0, firstIndex=1, maxt=200, numt=1000)
+    # Initial and final systems
+    rabif = Copy(rabii; λ=λf)
+    println(rabii.N)
 
-δ = 0.5
+    gs = SingleWellState(rabii)	
 
-n = 300
-j = 1 // 2
+    result = Wigner(rabif; Ψ0=gs, firstIndex=firstIndex, lastIndex=-1,
+    maxt=maxt, numt=numt, xs=LinRange(-limits, limits, wignerMesh), ys=LinRange(-limits, limits, wignerMesh), marginals=false,
+    saveData=true, saveGraph=false, showGraph=false)
 
-# Initial and final systems
-rabii = Rabi(N=n, R=R, λ=λi, δ=δ, j=j)
-rabif = Rabi(N=n, R=R, λ=λf, δ=δ, j=j)
+    ev = ExpectationValues(rabif, [:Jx=>Jx(rabif), :Jy=>Jy(rabif), :Jz=>Jz(rabif)]; Ψ0=gs, maxt=maxt, numt=2001, asymptotics=false)
+end
 
-gs = SingleWellState(rabii)	
+# CalculateWigner(Rabi(R=20, λ=1.5, δ=0.5, j=1//2), -sqrt(2.0)/5)
+# CalculateWigner(Rabi(R=20, λ=1.5, δ=0.5, j=1//2), sqrt(209)/12)
+# CalculateWigner(Rabi(R=20, λ=1.5, δ=0.5, j=1//2), 0.5)
+# CalculateWigner(Rabi(R=20, λ=1.5, δ=0.5, j=1//2), -24/65)
+# CalculateWigner(Rabi(R=20, λ=1.5, δ=0.5, j=1//2), -sqrt(209)/12)
+# CalculateWigner(Rabi(R=20, λ=1.5, δ=0.5, j=1//2), -1.5)
+# CalculateWigner(Rabi(R=20, λ=1.5, δ=0.5, j=1//2), -2.0)
+# CalculateWigner(Rabi(R=20, λ=1.5, δ=0.5, j=1//2), -0.1)
+# CalculateWigner(Rabi(R=20, λ=1.5, δ=0.5, j=1//2), 0.1)
 
-limits = 2.0
-wignerMesh = 400
+# CalculateWigner(Rabi(R=50, λ=1.5, δ=0.5, j=1//2), sqrt(209)/12, maxt=50)
+# CalculateWigner(Rabi(R=50, λ=1.5, δ=0.5, j=1//2), -1.0, maxt=50)
+# CalculateWigner(Rabi(R=50, λ=1.5, δ=0.5, j=1//2), -sqrt(209)/12, maxt=100)
+# CalculateWigner(Rabi(R=50, λ=1.5, δ=0.5, j=1//2), -24/65, maxt=100)
+# CalculateWigner(Rabi(R=50, λ=1.5, δ=0.5, j=1//2), 0, maxt=100)
+# CalculateWigner(Rabi(R=50, λ=1.5, δ=0.5, j=1//2), 0.5, maxt=100)
 
-firstIndex = 1
+# CalculateWigner(Rabi(R=20, λ=1.5, δ=0.5, j=1//2), -24/65, maxt=200)
+# CalculateWigner(Rabi(R=50, λ=1.5, δ=0.5, j=1//2), -24/65, maxt=200)
+# CalculateWigner(Rabi(R=100, λ=1.5, δ=0.5, j=1//2), -24/65, maxt=200)
 
-result = Wigner(rabif; Ψ0=gs, firstIndex=firstIndex, lastIndex=-1,
-maxt=100, numt=1000, xs=LinRange(-limits, limits, wignerMesh), ys=LinRange(-limits, limits, wignerMesh), marginals=false,
-saveData=true, saveGraph=false, showGraph=false)
+# CalculateWigner(Rabi(R=50, λ=1.5, δ=0.5, j=1//2), -0.2, maxt=200)
+# CalculateWigner(Rabi(R=50, λ=1.5, δ=0.5, j=1//2), 0.2, maxt=200)
+# CalculateWigner(Rabi(R=50, λ=1.5, δ=0.5, j=1//2), 0.4, maxt=200)
+# CalculateWigner(Rabi(R=50, λ=1.5, δ=0.5, j=1//2), -0.4, maxt=200)
 
-ev = ExpectationValues(rabif, [:Jx=>Jx(rabif), :Jy=>Jy(rabif), :Jz=>Jz(rabif)]; Ψ0=gs, numt=2000, asymptotics=false)
+# CalculateWigner(Rabi(R=50, λ=1.5, δ=0.5, j=2//2), -24/65, maxt=400)
+CalculateWigner(Rabi(R=50, λ=1.5, δ=0.5, j=3//2), -24/65, maxt=400)
+# CalculateWigner(Rabi(R=50, λ=1.5, δ=0.5, j=4//2), -24/65, maxt=400)

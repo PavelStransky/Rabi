@@ -3,7 +3,7 @@ import os
 fnames = []
 energies = []
 
-dir = 'D:/results/Rabi/schnellbruder/5 brothers lf=-0.2828 R=20'
+dir = r'D:\results\Rabi\schnellbruder\supplement\l=2'
 
 for fname in os.listdir(dir):
     start = fname.find("0.5)_")
