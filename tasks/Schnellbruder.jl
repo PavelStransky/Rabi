@@ -25,7 +25,7 @@ using LinearAlgebra
 
 include("../Rabi.jl")
 
-const PATH = "d:/results/rabi/schnellbruder/"
+const PATH = "c:/results/rabi/schnellbruder/"
 # const PATH = "/home/stransky/results/"
 
 gr()

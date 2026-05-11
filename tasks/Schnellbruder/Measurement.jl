@@ -4,6 +4,7 @@ using ProgressMeter
 
 include("../../Rabi.jl")
 include("ClassicalTrajectory.jl")
+include("../../Export.jl")
 
 gr()
 default(size=(1000,1000))
@@ -68,10 +69,11 @@ struct MeasurementConfig{R, T, X<:AbstractRange, FockOp, SpinOp, SpinKet}
     Jy::SpinOp              # spin Jy on SpinBasis(rabif.j)
     Jz::SpinOp              # spin Jz on SpinBasis(rabif.j)
     ket_mz::SpinKet         # spin eigenstate |m⟩_z
+    maximum::Bool           # whether to maximize negativity over measurement directions
 end
 
 function MeasurementConfig(rabif, m; wigner_lims=1.5, wigner_mesh=101,
-                           brother1=1, brother2=Int(2 * rabif.j) + 1)
+                           brother1=1, brother2=Int(2 * rabif.j) + 1, maximum=true)
     xs  = LinRange(-wigner_lims, wigner_lims, wigner_mesh)
     ys  = LinRange(-wigner_lims, wigner_lims, wigner_mesh)
     xss = xs * sqrt(Size(rabif))
@@ -88,7 +90,7 @@ function MeasurementConfig(rabif, m; wigner_lims=1.5, wigner_mesh=101,
     idx === nothing && error("Invalid m=$m for j=$(rabif.j). Allowed values: $ms")
     ket_mz = basisstate(b, idx)
 
-    return MeasurementConfig(rabif, m, brother1, brother2, xs, ys, xss, yss, Id, Jy, Jz, ket_mz)
+    return MeasurementConfig(rabif, m, brother1, brother2, xs, ys, xss, yss, Id, Jy, Jz, ket_mz, maximum)
 end
 
 
@@ -139,6 +141,28 @@ end
 
 
 """
+    Calculates the Wigner function after projecting onto the direction defined by angles θ and ϕ, and plots it.
+    Also saves the Wigner function data to a file.
+"""
+function WignerProjection(rabii, λf, m, θ, ϕ; t=31.4, wigner_mesh=201, wigner_lims=1.5)
+    rabif = Copy(rabii; λ=λf)
+
+    Ψ0 = SingleWellState(rabii)
+    ts  = LinRange(0.0, t, 2)
+
+    tout, Ψt = timeevolution.schroedinger(ts, Ψ0, H(rabif))
+    cfg = MeasurementConfig(rabif, m; wigner_lims=wigner_lims, wigner_mesh=wigner_mesh)
+
+    _, _, w = WignerNegativity(cfg, Ψt[2], θ, ϕ)
+    clim = (-maximum(abs.(w)), maximum(abs.(w)))
+    p = heatmap(cfg.xs, cfg.ys, transpose(w), title="Wigner", c=:bwr, grid=false, xlabel="x", ylabel="p", left_margin=10mm, bottom_margin=5mm, clim=clim)
+    display(p)
+
+    Export("$(PATH)wigner_$(rabii)_$(λf)_$(Int(m + rabii.j))_($(θ)_$(ϕ)).txt", cfg.ys, cfg.xs, w)
+end
+
+
+"""
     Computes the Wigner negativity before measurement, after projecting onto the orthogonal
     direction, and after optimizing over all directions.
     Returns (i, negativity, negativity_orthogonal, projection_orthogonal, negativity_maximum, projection_maximum).
@@ -161,8 +185,13 @@ function Projection(cfg::MeasurementConfig, i, Ψ, point)
     negativity_orthogonal, projection_orthogonal, _ = WignerNegativity(cfg, Ψ, θ, ϕ)
 
     # Maximize negativity — start from the orthogonal direction (physically motivated, faster convergence)
-    result = optimize(x -> -WignerNegativity(cfg, Ψ, x[1], x[2])[1], [θ, ϕ], NelderMead())
-    negativity_maximum, projection_maximum, _ = WignerNegativity(cfg, Ψ, result.minimizer[1], result.minimizer[2])
+    if cfg.maximum
+        result = optimize(x -> -WignerNegativity(cfg, Ψ, x[1], x[2])[1], [θ, ϕ], NelderMead())
+        negativity_maximum, projection_maximum, _ = WignerNegativity(cfg, Ψ, result.minimizer[1], result.minimizer[2])
+    else
+        negativity_maximum = negativity
+        projection_maximum = projection_orthogonal
+    end
 
     return i, negativity, negativity_orthogonal, projection_orthogonal, negativity_maximum, projection_maximum
 end
@@ -213,6 +242,39 @@ function ProjectionTime(rabii, λf, m; maxt=200, numt=2001, wigner_mesh=101, wig
     Export("$(PATH)projection_maximum_$(rabii)_$(λf)_$(Int(m + rabii.j))", tout, projection_maximum)
 end
 
+
+"""
+Measures the projection onto the given direction and the Wigner negativity before and after the measurement.
+"""
+function ProjectionTimeDirection(rabii, λf, m, θ, ϕ; maxt=200, numt=2001, wigner_mesh=101, wigner_lims=1.5)
+    rabif = Copy(rabii; λ=λf)
+    println(rabii.N)
+
+    Ψ0 = SingleWellState(rabii)
+    ts  = LinRange(0.0, maxt, numt)
+
+    negativity = Vector{Float64}(undef, numt)
+    projection = Vector{Float64}(undef, numt)
+
+    print("Starting time evolution...")
+    time = @elapsed tout, Ψt = timeevolution.schroedinger(ts, Ψ0, H(rabif))
+    println(time, "s")
+
+    cfg = MeasurementConfig(rabif, m; wigner_lims=wigner_lims, wigner_mesh=wigner_mesh)
+
+    @showprogress for (i, Ψ) in enumerate(Ψt)
+        negativity[i], projection[i], _ = WignerNegativity(cfg, Ψ, θ, ϕ)
+    end
+
+    pl = plot(ts, negativity, xlabel="\$t\$", ylabel="Wigner negativity", title="Wigner negativity in direction $(θ), $(ϕ)", legend=false)
+    display(pl)
+
+    p2 = plot(ts, projection, xlabel="\$t\$", ylabel="P", title="Probability of projection in direction $(θ), $(ϕ)", legend=false)
+    display(p2)
+
+    Export("$(PATH)negativity_direction_$(rabii)_$(λf)_$(Int(m + rabii.j))_($(θ)_$(ϕ))", tout, negativity)
+    Export("$(PATH)projection_direction_$(rabii)_$(λf)_$(Int(m + rabii.j))_($(θ)_$(ϕ))", tout, projection)
+end
 
 function ScanNegativity(rabii, λf; t=31.4, wigner_mesh=101, wigner_mesh_final=201, wigner_lims=1.5, scan_mesh=101, m=-rabii.j, brother1=1, brother2=Int(2 * rabii.j) + 1)
     rabif = Copy(rabii; λ=λf)
@@ -285,12 +347,12 @@ function ScanNegativity(rabii, λf; t=31.4, wigner_mesh=101, wigner_mesh_final=2
     display(p)
     savefig(p, "$(PATH)wigner_orthogonal_$(rabii)_$(λf)_$(t)_$(Int(m + rabii.j))_$brother1$brother2.png")
 
-    Export("$(PATH)negativity_scan_$(rabii)_$(λf)_$(t)_$(Int(m + rabii.j))_$brother1$brother2", negativity)
-    Export("$(PATH)projection_scan_$(rabii)_$(λf)_$(t)_$(Int(m + rabii.j))_$brother1$brother2", projection)
-    Export("$(PATH)wigner_orthogonal_$(rabii)_$(λf)_$(t)_$(Int(m + rabii.j))_$brother1$brother2", cfg_final.xs, cfg_final.ys, w)
-    Export("$(PATH)wigner_max_$(rabii)_$(λf)_$(t)_$(Int(m + rabii.j))_$brother1$brother2", cfg_final.xs, cfg_final.ys, w)
+    Export("$(PATH)negativity_scan_$(rabii)_$(λf)_$(t)_$(Int(m + rabii.j))_$brother1$brother2.txt", ϕs, θs, negativity)
+    Export("$(PATH)projection_scan_$(rabii)_$(λf)_$(t)_$(Int(m + rabii.j))_$brother1$brother2.txt", ϕs, θs, projection)
+    Export("$(PATH)wigner_orthogonal_$(rabii)_$(λf)_$(t)_$(Int(m + rabii.j))_$brother1$brother2.txt", cfg_final.ys, cfg_final.xs, w)
+    Export("$(PATH)wigner_max_$(rabii)_$(λf)_$(t)_$(Int(m + rabii.j))_$brother1$brother2.txt", cfg_final.ys, cfg_final.xs, w)
 
-    return maxθ, maxϕ, maxn, maxp, ϕo, θo, no, po
+    return maxθ, maxϕ, maxn, maxp, θo, ϕo, no, po
 end
 
 
@@ -356,10 +418,45 @@ end
 # t = Projection(Rabi(R=20, λ=1.5, δ=0.5, j=4//2), -0.283, -2//2, maxt=200, numt=1001, wigner_mesh=151)
 # t = Projection(Rabi(R=20, λ=1.5, δ=0.5, j=4//2), -0.283, -0//2, maxt=200, numt=1001, wigner_mesh=151)
 
-# print(ScanNegativity(Rabi(R=20, λ=1.5, δ=0.5, j=4//2), -0.283, m=-4//2, t=31.4, wigner_mesh=101, scan_mesh=11, brother1=2, brother2=4, save=false))
+# for m in -4//2:1:4//2
+#     print("Measuring projection m = ", m, " and direction (π/2, 0)...")
+#     ProjectionTimeDirection(Rabi(R=20, λ=1.5, δ=0.5, j=4//2), -0.369, m, π/2, π/2, maxt=200, numt=1001, wigner_mesh=201)
+# end
 
 # Supplemental material
-# Projection(Rabi(R=50, λ=1.5, δ=0.5, j=1//2), -0.369, -1//2, maxt=200, numt=1001, wigner_mesh=201)
-# Projection(Rabi(R=50, λ=1.5, δ=0.5, j=2//2), -0.369, -2//2, maxt=200, numt=1001, wigner_mesh=201)
+# for m in -4//2:1:4//2
+#      result = ScanNegativity(Rabi(R=20, λ=1.5, δ=0.5, j=4//2), -0.369, m=m, t=31.4, brother1=1, brother2=5)
+#      println(m, " ", result)
+# end
 
-# Projection(Rabi(R=20, λ=1.5, δ=0.5, j=2//2), -0.369, -2//2, maxt=200, numt=101, wigner_mesh=51)
+# # Maximum negativity directions for main text
+# WignerProjection(Rabi(R=20, λ=1.5, δ=0.5, j=4//2), -0.369, -4//2, 2.230530784048753, 1.8849555921538759, t=31.4, wigner_mesh=201, wigner_lims=1.2)
+# WignerProjection(Rabi(R=20, λ=1.5, δ=0.5, j=4//2), -0.369, -2//2, 1.6022122533307945, 1.0681415022205298, t=31.4, wigner_mesh=201, wigner_lims=1.2)
+# WignerProjection(Rabi(R=20, λ=1.5, δ=0.5, j=4//2), -0.369, 0//2, 1.6022122533307945, 3.078760800517997, t=31.4, wigner_mesh=201, wigner_lims=1.2)
+# WignerProjection(Rabi(R=20, λ=1.5, δ=0.5, j=4//2), -0.369, 2//2, 1.5393804002589986, 4.209734155810323, t=31.4, wigner_mesh=201, wigner_lims=1.2)
+# WignerProjection(Rabi(R=20, λ=1.5, δ=0.5, j=4//2), -0.369, 4//2, 0.91106186954104, 5.026548245743669, t=31.4, wigner_mesh=201, wigner_lims=1.2)
+
+# # Orthogonal directions for main text   
+# WignerProjection(Rabi(R=20, λ=1.5, δ=0.5, j=4//2), -0.369, -4//2, 1.93865938434536, 3.040574820253083, t=31.4, wigner_mesh=201, wigner_lims=1.2)
+# WignerProjection(Rabi(R=20, λ=1.5, δ=0.5, j=4//2), -0.369, -2//2, 1.93865938434536, 3.040574820253083, t=31.4, wigner_mesh=201, wigner_lims=1.2)
+# WignerProjection(Rabi(R=20, λ=1.5, δ=0.5, j=4//2), -0.369, 0//2, 1.93865938434536, 3.040574820253083, t=31.4, wigner_mesh=201, wigner_lims=1.2)
+# WignerProjection(Rabi(R=20, λ=1.5, δ=0.5, j=4//2), -0.369, 2//2, 1.93865938434536, 3.040574820253083, t=31.4, wigner_mesh=201, wigner_lims=1.2)
+# WignerProjection(Rabi(R=20, λ=1.5, δ=0.5, j=4//2), -0.369, 4//2, 1.93865938434536, 3.040574820253083, t=31.4, wigner_mesh=201, wigner_lims=1.2)
+
+# # Direction x
+# WignerProjection(Rabi(R=20, λ=1.5, δ=0.5, j=4//2), -0.369, -4//2, pi / 2, 0, t=31.4, wigner_mesh=201, wigner_lims=1.2)
+# WignerProjection(Rabi(R=20, λ=1.5, δ=0.5, j=4//2), -0.369, -2//2, pi / 2, 0, t=31.4, wigner_mesh=201, wigner_lims=1.2)
+# WignerProjection(Rabi(R=20, λ=1.5, δ=0.5, j=4//2), -0.369, 0//2, pi / 2, 0, t=31.4, wigner_mesh=201, wigner_lims=1.2)
+# WignerProjection(Rabi(R=20, λ=1.5, δ=0.5, j=4//2), -0.369, 2//2, pi / 2, 0, t=31.4, wigner_mesh=201, wigner_lims=1.2)
+# WignerProjection(Rabi(R=20, λ=1.5, δ=0.5, j=4//2), -0.369, 4//2, pi / 2, 0, t=31.4, wigner_mesh=201, wigner_lims=1.2)
+
+# # Direction y
+# WignerProjection(Rabi(R=20, λ=1.5, δ=0.5, j=4//2), -0.369, -4//2, pi / 2, pi / 2, t=31.4, wigner_mesh=201, wigner_lims=1.2)
+# WignerProjection(Rabi(R=20, λ=1.5, δ=0.5, j=4//2), -0.369, -2//2, pi / 2, pi / 2, t=31.4, wigner_mesh=201, wigner_lims=1.2)
+# WignerProjection(Rabi(R=20, λ=1.5, δ=0.5, j=4//2), -0.369, 0//2, pi / 2, pi / 2, t=31.4, wigner_mesh=201, wigner_lims=1.2)
+# WignerProjection(Rabi(R=20, λ=1.5, δ=0.5, j=4//2), -0.369, 2//2, pi / 2, pi / 2, t=31.4, wigner_mesh=201, wigner_lims=1.2)
+# WignerProjection(Rabi(R=20, λ=1.5, δ=0.5, j=4//2), -0.369, 4//2, pi / 2, pi / 2, t=31.4, wigner_mesh=201, wigner_lims=1.2)
+
+# Orthogonal directions for teaser, better resolution
+WignerProjection(Rabi(R=20, λ=1.5, δ=0.5, j=4//2), -0.283, -4//2, 1.54, 3.08, t=31.4, wigner_mesh=501, wigner_lims=1.2)
+WignerProjection(Rabi(R=20, λ=1.5, δ=0.5, j=4//2), -0.283, 0//2, 1.54, 3.08, t=31.4, wigner_mesh=501, wigner_lims=1.2)

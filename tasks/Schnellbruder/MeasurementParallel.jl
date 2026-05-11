@@ -15,7 +15,7 @@ end
 Measures the projection onto the state defined by the classical trajectory,
 and the Wigner negativity before and after the measurement — distributed across workers.
 """
-function ProjectionParallel(rabii, λf, m; maxt=200, numt=2001, wigner_mesh=101, wigner_lims=1.5)
+function ProjectionParallel(rabii, λf, m; maxt=200, numt=2001, wigner_mesh=101, wigner_lims=1.5, maximum=true)
     rabif = Copy(rabii; λ=λf)
     println(rabii.N)
 
@@ -28,11 +28,9 @@ function ProjectionParallel(rabii, λf, m; maxt=200, numt=2001, wigner_mesh=101,
     negativity_maximum    = Vector{Float64}(undef, numt)
     projection_maximum    = Vector{Float64}(undef, numt)
 
-    print("Starting time evolution...")
     time = @elapsed tout, Ψt = timeevolution.schroedinger(ts, Ψ0, H(rabif))
-    println(time, "s")
 
-    cfg        = MeasurementConfig(rabif, m; wigner_lims=wigner_lims, wigner_mesh=wigner_mesh)
+    cfg        = MeasurementConfig(rabif, m; wigner_lims=wigner_lims, wigner_mesh=wigner_mesh, maximum=maximum)
     trajectory = Trajectory(rabif, rabii.λ, maxt, numt)
 
     input  = [(i, Ψt[i], getindex.(trajectory, i)) for i in eachindex(Ψt)]
@@ -59,10 +57,14 @@ function ProjectionParallel(rabii, λf, m; maxt=200, numt=2001, wigner_mesh=101,
 
     Export("$(PATH)negativity_$(rabii)_$(λf)_$(Int(m + rabii.j))", tout, negativity)
     Export("$(PATH)negativity_orthogonal_$(rabii)_$(λf)_$(Int(m + rabii.j))", tout, negativity_orthogonal)
-    Export("$(PATH)negativity_maximum_$(rabii)_$(λf)_$(Int(m + rabii.j))", tout, negativity_maximum)
     Export("$(PATH)projection_orthogonal_$(rabii)_$(λf)_$(Int(m + rabii.j))", tout, projection_orthogonal)
-    Export("$(PATH)projection_maximum_$(rabii)_$(λf)_$(Int(m + rabii.j))", tout, projection_maximum)
+    if maximum
+        Export("$(PATH)negativity_maximum_$(rabii)_$(λf)_$(Int(m + rabii.j))", tout, negativity_maximum)
+        Export("$(PATH)projection_maximum_$(rabii)_$(λf)_$(Int(m + rabii.j))", tout, projection_maximum)
+    end
 end
 
 # ProjectionParallel(Rabi(R=20, λ=1.5, δ=0.5, j=1//2), -0.369, -1//2, maxt=100, numt=2001, wigner_mesh=101)
-ProjectionParallel(Rabi(R=20, λ=1.5, δ=0.5, j=2//2), -0.369, -2//2, maxt=100, numt=2001, wigner_mesh=101)
+for m = -3//2:3//2
+    ProjectionParallel(Rabi(R=50, λ=1.5, δ=0.5, j=3//2), -0.369, m, maxt=200, numt=1001, wigner_mesh=201, maximum=false)
+end
